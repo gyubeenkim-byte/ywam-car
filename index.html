@@ -80,7 +80,7 @@
       </p>
     </div>
 
-    <!-- Start / End Time Selection -->
+    <!-- Start / End Time Selection (00:00 ~ 24:00) -->
     <div class="grid grid-cols-2 gap-3 bg-card p-3 rounded-xl border border-gray-800">
       <div>
         <label class="block text-[11px] text-emerald-400 mb-1 font-semibold">출발 시각 (시작일)</label>
@@ -97,7 +97,7 @@
     </div>
 
     <!-- Reservation Form Details -->
-    <form id="reservationForm" class="space-y-3.5">
+    <form id="reservationForm" class="space-y-4">
       <div class="space-y-1">
         <label class="block text-xs text-gray-400">신청자 성함 <span class="text-emerald-500">*</span></label>
         <input type="text" id="userName" required placeholder="예: 홍길동 간사" class="w-full bg-input text-white text-sm rounded-lg p-2.5 border border-gray-700 focus:outline-none focus:border-emerald-500">
@@ -119,9 +119,13 @@
         <textarea id="userPurpose" required rows="2" placeholder="예: 수련회 장소 답사 및 물품 수거" class="w-full bg-input text-white text-sm rounded-lg p-2.5 border border-gray-700 focus:outline-none focus:border-emerald-500"></textarea>
       </div>
 
-      <div class="space-y-1">
-        <label class="block text-xs text-gray-400">삭제 비밀번호 <span class="text-emerald-500">* (취소/삭제 시 필요)</span></label>
-        <input type="password" id="userPassword" required placeholder="4자리 이상 숫자/문자" class="w-full bg-input text-white text-sm rounded-lg p-2.5 border border-gray-700 focus:outline-none focus:border-emerald-500">
+      <!-- 비밀번호 입력란 강조 및 명확한 가시성 확보 -->
+      <div class="space-y-1 bg-card p-3 rounded-xl border border-gray-700">
+        <label class="block text-xs text-emerald-400 font-semibold flex items-center gap-1.5">
+          <i class="fa-solid fa-lock text-xs"></i> 삭제 비밀번호 <span class="text-emerald-500">* (본인 확인용)</span>
+        </label>
+        <input type="password" id="userPassword" required placeholder="예약 취소 시 사용할 4자리 이상 비밀번호" class="w-full bg-input text-white text-sm rounded-lg p-2.5 border border-gray-600 focus:outline-none focus:border-emerald-500">
+        <p class="text-[10px] text-gray-400">※ 이 예약건을 취소/삭제할 때 확인 과정에서 사용됩니다.</p>
       </div>
 
       <button type="submit" class="w-full accent-green accent-green-hover font-bold py-3.5 rounded-xl shadow-lg text-sm mt-2 transition-all">
@@ -154,9 +158,9 @@
           🔥 Firebase Realtime Database 연동
         </p>
         <p class="text-[11px] text-gray-400">
-          파이어베이스 콘솔에서 발급받은 Config JSON 문자열을 그대로 넣으시면 실시간 예약 공유가 가능합니다.
+          파이어베이스 Config JSON 문자열
         </p>
-        <textarea id="firebaseConfigInput" rows="4" placeholder='{"apiKey": "...", "databaseURL": "...", ...}' class="w-full bg-input text-white text-[10px] rounded-lg p-2 border border-gray-700 font-mono"></textarea>
+        <textarea id="firebaseConfigInput" rows="4" placeholder='{"apiKey": "...", ...}' class="w-full bg-input text-white text-[10px] rounded-lg p-2 border border-gray-700 font-mono"></textarea>
       </div>
 
       <div class="space-y-2">
@@ -195,7 +199,7 @@
     let webhookUrl = localStorage.getItem("google_chat_webhook") || DEFAULT_WEBHOOK_URL;
     let firebaseConfigRaw = localStorage.getItem("firebase_config") || DEFAULT_FIREBASE_CONFIG;
 
-    // 00:00 ~ 24:00 (30분 단위)
+    // 00:00 ~ 24:00 (하루 전체 24시간 30분 단위 생성)
     const timeSlots = [];
     for (let h = 0; h < 24; h++) {
       const hourStr = h < 10 ? `0${h}` : `${h}`;
@@ -277,7 +281,7 @@
 
       const activeReservations = reservations.filter(r => r.vehicle === selectedVehicle);
 
-      // 1. 출발 시각 옵션 생성
+      // 1. 출발 시각 옵션 생성 (00:00 ~ 23:30)
       timeSlots.forEach(t => {
         let isStartDisabled = false;
         if (t === "24:00") {
@@ -308,7 +312,7 @@
 
       const selectedStartMs = parseTimeMs(effectiveStartDate, startTimeSelect.value);
 
-      // 2. 반납 시각 옵션 생성 (선택된 출발 시각 이후여야 함)
+      // 2. 반납 시각 옵션 생성 (00:30 ~ 24:00)
       timeSlots.forEach(t => {
         let isEndDisabled = false;
         if (t === "00:00") {
@@ -316,11 +320,9 @@
         } else if (effectiveEndDate) {
           const checkEndMs = parseTimeMs(effectiveEndDate, t);
 
-          // 출발 시각보다 이전이거나 같은 시간은 선택 불가
           if (checkEndMs <= selectedStartMs) {
             isEndDisabled = true;
           } else {
-            // 출발 시각과 반납 시각 사이 구간에 기존 예약이 걸치는지 판별
             isEndDisabled = activeReservations.some(res => {
               const resStartMs = parseTimeMs(res.startDate, res.startTime);
               const resEndMs = parseTimeMs(res.endDate, res.endTime);
@@ -493,7 +495,8 @@
     });
 
     function deleteReservation(resObj) {
-      const inputPwd = prompt(`예약 신청 시 설정한 비밀번호를 입력해 주세요.`);
+      // 🔒 예약삭제 시 본인 확인 비밀번호 팝업
+      const inputPwd = prompt(`예약 신청 시 설정하셨던 삭제 비밀번호를 입력해 주세요.`);
       
       if (inputPwd === null) return;
 

@@ -167,7 +167,6 @@
   </div>
 
   <script>
-    // 기본 파이어베이스 설정값
     const DEFAULT_FIREBASE_CONFIG = JSON.stringify({
       apiKey: "AIzaSyCFiOVg_XZWjQ7dTRe0EnfE81eBi0CHbM8",
       authDomain: "gd-base-vehicle-reservation.firebaseapp.com",
@@ -179,7 +178,6 @@
       measurementId: "G-ZQWJQQRBK1"
     });
 
-    // 기본 구글 챗 Webhook URL
     const DEFAULT_WEBHOOK_URL = "https://chat.googleapis.com/v1/spaces/AAQAxpJfkLw/messages?key=AIzaSyDdI0hCZtE6vySjMm-WEfRq3CPzqKqqsHI&token=8VxRP6gPwmGQycEW8ig1Th-Pc6T6tNG3fqipRkuWp-A"; 
 
     let currentDate = new Date();
@@ -191,7 +189,6 @@
     let webhookUrl = localStorage.getItem("google_chat_webhook") || DEFAULT_WEBHOOK_URL;
     let firebaseConfigRaw = localStorage.getItem("firebase_config") || DEFAULT_FIREBASE_CONFIG;
 
-    // Time Slots (08:00 - 21:00)
     const timeSlots = [];
     for (let h = 8; h <= 21; h++) {
       const hourStr = h < 10 ? `0${h}` : `${h}`;
@@ -209,16 +206,16 @@
 
     document.addEventListener("DOMContentLoaded", () => {
       initFirebase();
-      initTimeSelectors();
       renderCalendar();
       if (!db) {
         loadLocalReservations();
       }
       document.getElementById("webhookInput").value = webhookUrl;
       document.getElementById("firebaseConfigInput").value = firebaseConfigRaw;
+      
+      vehicleSelect.addEventListener("change", () => updateTimeSelectOptions());
     });
 
-    // Firebase Initialization
     function initFirebase() {
       if (!firebaseConfigRaw) return;
       try {
@@ -230,7 +227,6 @@
         document.getElementById("dbStatusBadge").textContent = "파이어베이스 실시간 공유중";
         document.getElementById("dbStatusBadge").className = "text-[10px] px-2 py-0.5 rounded-full bg-emerald-900/60 text-emerald-300 border border-emerald-700/50";
 
-        // Realtime Sync
         db.ref("ywam_reservations").on("value", (snapshot) => {
           const data = snapshot.val();
           reservations = data ? Object.keys(data).map(key => ({ ...data[key], fbKey: key })) : [];
@@ -248,15 +244,73 @@
       renderReservationList();
     }
 
-    function initTimeSelectors() {
+    // 중복 시간대 비활성화(disabled) 옵션 업데이트 기능
+    function updateTimeSelectOptions() {
+      const selectedVehicle = vehicleSelect.value;
+      const effectiveEndDate = endDateStr || startDateStr;
+
+      const currentStartVal = startTimeSelect.value || "09:00";
+      const currentEndVal = endTimeSelect.value || "18:00";
+
       startTimeSelect.innerHTML = "";
       endTimeSelect.innerHTML = "";
+
+      const activeReservations = reservations.filter(r => r.vehicle === selectedVehicle);
+
       timeSlots.forEach(t => {
-        startTimeSelect.innerHTML += `<option value="${t}">${t}</option>`;
-        endTimeSelect.innerHTML += `<option value="${t}">${t}</option>`;
+        let isStartDisabled = false;
+        let isEndDisabled = false;
+
+        if (startDateStr) {
+          const checkStartMs = new Date(`${startDateStr}T${t}:00`).getTime();
+          isStartDisabled = activeReservations.some(res => {
+            const resStartMs = new Date(`${res.startDate}T${res.startTime}:00`).getTime();
+            const resEndMs = new Date(`${res.endDate}T${res.endTime}:00`).getTime();
+            return checkStartMs >= resStartMs && checkStartMs < resEndMs;
+          });
+        }
+
+        if (effectiveEndDate) {
+          const checkEndMs = new Date(`${effectiveEndDate}T${t}:00`).getTime();
+          isEndDisabled = activeReservations.some(res => {
+            const resStartMs = new Date(`${res.startDate}T${res.startTime}:00`).getTime();
+            const resEndMs = new Date(`${res.endDate}T${res.endTime}:00`).getTime();
+            return checkEndMs > resStartMs && checkEndMs <= resEndMs;
+          });
+        }
+
+        const startOpt = document.createElement("option");
+        startOpt.value = t;
+        startOpt.textContent = isStartDisabled ? `${t} (예약됨)` : t;
+        if (isStartDisabled) {
+          startOpt.disabled = true;
+          startOpt.className = "text-gray-500 bg-gray-800";
+        }
+        startTimeSelect.appendChild(startOpt);
+
+        const endOpt = document.createElement("option");
+        endOpt.value = t;
+        endOpt.textContent = isEndDisabled ? `${t} (예약됨)` : t;
+        if (isEndDisabled) {
+          endOpt.disabled = true;
+          endOpt.className = "text-gray-500 bg-gray-800";
+        }
+        endTimeSelect.appendChild(endOpt);
       });
-      startTimeSelect.value = "09:00";
-      endTimeSelect.value = "18:00";
+
+      if (startTimeSelect.querySelector(`option[value="${currentStartVal}"]:not([disabled])`)) {
+        startTimeSelect.value = currentStartVal;
+      } else {
+        const firstValidStart = startTimeSelect.querySelector("option:not([disabled])");
+        if (firstValidStart) startTimeSelect.value = firstValidStart.value;
+      }
+
+      if (endTimeSelect.querySelector(`option[value="${currentEndVal}"]:not([disabled])`)) {
+        endTimeSelect.value = currentEndVal;
+      } else {
+        const firstValidEnd = endTimeSelect.querySelector("option:not([disabled])");
+        if (firstValidEnd) endTimeSelect.value = firstValidEnd.value;
+      }
     }
 
     function renderCalendar() {
@@ -306,6 +360,8 @@
       } else {
         rangeSelectHint.textContent = `선택된 기간: ${startDateStr} ~ ${endDateStr}`;
       }
+
+      updateTimeSelectOptions();
     }
 
     function handleDateClick(dateStr) {
@@ -323,16 +379,14 @@
       renderCalendar();
     }
 
-    // 시간 중복 확인 검증 함수
     function checkReservationConflict(newVehicle, newStart, newEnd) {
       for (const res of reservations) {
         if (res.vehicle === newVehicle) {
           const resStart = new Date(`${res.startDate}T${res.startTime}:00`).getTime();
           const resEnd = new Date(`${res.endDate}T${res.endTime}:00`).getTime();
 
-          // 시간이 서로 교차하거나 겹치는지 체크 (start < endExisting && end > startExisting)
           if (newStart < resEnd && newEnd > resStart) {
-            return res; // 겹치는 기존 예약 정보 반환
+            return res;
           }
         }
       }
@@ -359,7 +413,6 @@
         return;
       }
 
-      // 겹치는 예약이 있는지 검증
       const selectedVehicle = vehicleSelect.value;
       const conflictingRes = checkReservationConflict(selectedVehicle, newStartDateTime, newEndDateTime);
 

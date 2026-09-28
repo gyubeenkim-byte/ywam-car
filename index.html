@@ -167,14 +167,29 @@
   </div>
 
   <script>
+    // 기본 연동 정보 고정 설정
+    const DEFAULT_FIREBASE_CONFIG = JSON.stringify({
+      apiKey: "AIzaSyCFiOVg_XZWjQ7dTRe0EnfE81eBi0CHbM8",
+      authDomain: "gd-base-vehicle-reservation.firebaseapp.com",
+      databaseURL: "https://gd-base-vehicle-reservation-default-rtdb.firebaseio.com",
+      projectId: "gd-base-vehicle-reservation",
+      storageBucket: "gd-base-vehicle-reservation.firebasestorage.app",
+      messagingSenderId: "464640567650",
+      appId: "1:464640567650:web:6089ee1300453743f9643b",
+      measurementId: "G-ZQWJQQRBK1"
+    });
+
+    // 내장된 구글 챗 Webhook URL
+    const DEFAULT_WEBHOOK_URL = "https://chat.googleapis.com/v1/spaces/AAQAxpJfkLw/messages?key=AIzaSyDdI0hCZtE6vySjMm-WEfRq3CPzqKqqsHI&token=8VxRP6gPwmGQycEW8ig1Th-Pc6T6tNG3fqipRkuWp-A"; 
+
     let currentDate = new Date();
     let startDateStr = null;
     let endDateStr = null;
     let reservations = [];
     let db = null;
 
-    let webhookUrl = localStorage.getItem("google_chat_webhook") || "";
-    let firebaseConfigRaw = localStorage.getItem("firebase_config") || "";
+    let webhookUrl = localStorage.getItem("google_chat_webhook") || DEFAULT_WEBHOOK_URL;
+    let firebaseConfigRaw = localStorage.getItem("firebase_config") || DEFAULT_FIREBASE_CONFIG;
 
     // Time Slots (08:00 - 21:00)
     const timeSlots = [];

@@ -118,6 +118,11 @@
         <textarea id="userPurpose" required rows="2" placeholder="예: 수련회 장소 답사 및 물품 수거" class="w-full bg-input text-white text-sm rounded-lg p-2.5 border border-gray-700 focus:outline-none focus:border-emerald-500"></textarea>
       </div>
 
+      <div class="space-y-1">
+        <label class="block text-xs text-gray-400">삭제 비밀번호 <span class="text-emerald-500">* (취소/삭제 시 필요)</span></label>
+        <input type="password" id="userPassword" required placeholder="4자리 이상 숫자/문자" class="w-full bg-input text-white text-sm rounded-lg p-2.5 border border-gray-700 focus:outline-none focus:border-emerald-500">
+      </div>
+
       <button type="submit" class="w-full accent-green accent-green-hover font-bold py-3.5 rounded-xl shadow-lg text-sm mt-2 transition-all">
         차량 예약 신청하기
       </button>
@@ -214,6 +219,7 @@
       document.getElementById("firebaseConfigInput").value = firebaseConfigRaw;
       
       vehicleSelect.addEventListener("change", () => updateTimeSelectOptions());
+      startTimeSelect.addEventListener("change", () => updateTimeSelectOptions());
     });
 
     function initFirebase() {
@@ -244,13 +250,14 @@
       renderReservationList();
     }
 
-    // 중복 시간대 비활성화(disabled) 옵션 업데이트 기능
+    // 예약시간 중복 검증 알고리즘 강화
     function updateTimeSelectOptions() {
       const selectedVehicle = vehicleSelect.value;
+      const effectiveStartDate = startDateStr;
       const effectiveEndDate = endDateStr || startDateStr;
 
-      const currentStartVal = startTimeSelect.value || "09:00";
-      const currentEndVal = endTimeSelect.value || "18:00";
+      const currentStartVal = startTimeSelect.value;
+      const currentEndVal = endTimeSelect.value;
 
       startTimeSelect.innerHTML = "";
       endTimeSelect.innerHTML = "";
@@ -261,8 +268,8 @@
         let isStartDisabled = false;
         let isEndDisabled = false;
 
-        if (startDateStr) {
-          const checkStartMs = new Date(`${startDateStr}T${t}:00`).getTime();
+        if (effectiveStartDate) {
+          const checkStartMs = new Date(`${effectiveStartDate}T${t}:00`).getTime();
           isStartDisabled = activeReservations.some(res => {
             const resStartMs = new Date(`${res.startDate}T${res.startTime}:00`).getTime();
             const resEndMs = new Date(`${res.endDate}T${res.endTime}:00`).getTime();
@@ -279,37 +286,47 @@
           });
         }
 
+        // 출발 시각 옵션 추가
         const startOpt = document.createElement("option");
         startOpt.value = t;
-        startOpt.textContent = isStartDisabled ? `${t} (예약됨)` : t;
+        startOpt.textContent = isStartDisabled ? `${t} (이미 예약됨)` : t;
         if (isStartDisabled) {
           startOpt.disabled = true;
-          startOpt.className = "text-gray-500 bg-gray-800";
+          startOpt.style.color = "#888888";
+          startOpt.style.backgroundColor = "#1a1a1a";
         }
         startTimeSelect.appendChild(startOpt);
 
+        // 반납 시각 옵션 추가
         const endOpt = document.createElement("option");
         endOpt.value = t;
-        endOpt.textContent = isEndDisabled ? `${t} (예약됨)` : t;
+        endOpt.textContent = isEndDisabled ? `${t} (이미 예약됨)` : t;
         if (isEndDisabled) {
           endOpt.disabled = true;
-          endOpt.className = "text-gray-500 bg-gray-800";
+          endOpt.style.color = "#888888";
+          endOpt.style.backgroundColor = "#1a1a1a";
         }
         endTimeSelect.appendChild(endOpt);
       });
 
-      if (startTimeSelect.querySelector(`option[value="${currentStartVal}"]:not([disabled])`)) {
+      // 선택 가능한 첫 번째 유효값 자동 선택
+      if (currentStartVal && startTimeSelect.querySelector(`option[value="${currentStartVal}"]:not([disabled])`)) {
         startTimeSelect.value = currentStartVal;
       } else {
         const firstValidStart = startTimeSelect.querySelector("option:not([disabled])");
         if (firstValidStart) startTimeSelect.value = firstValidStart.value;
       }
 
-      if (endTimeSelect.querySelector(`option[value="${currentEndVal}"]:not([disabled])`)) {
+      if (currentEndVal && endTimeSelect.querySelector(`option[value="${currentEndVal}"]:not([disabled])`)) {
         endTimeSelect.value = currentEndVal;
       } else {
-        const firstValidEnd = endTimeSelect.querySelector("option:not([disabled])");
-        if (firstValidEnd) endTimeSelect.value = firstValidEnd.value;
+        const validEndOpts = Array.from(endTimeSelect.querySelectorAll("option:not([disabled])"));
+        const validAfterStart = validEndOpts.find(opt => opt.value > startTimeSelect.value);
+        if (validAfterStart) {
+          endTimeSelect.value = validAfterStart.value;
+        } else if (validEndOpts.length > 0) {
+          endTimeSelect.value = validEndOpts[validEndOpts.length - 1].value;
+        }
       }
     }
 
@@ -405,6 +422,11 @@
       const startTimeVal = startTimeSelect.value;
       const endTimeVal = endTimeSelect.value;
 
+      if (!startTimeVal || !endTimeVal) {
+        alert("선택 가능한 시간이 없습니다. 다른 날짜나 차량을 선택해 주세요.");
+        return;
+      }
+
       const newStartDateTime = new Date(`${startDateStr}T${startTimeVal}:00`).getTime();
       const newEndDateTime = new Date(`${finalEndDate}T${endTimeVal}:00`).getTime();
 
@@ -417,9 +439,11 @@
       const conflictingRes = checkReservationConflict(selectedVehicle, newStartDateTime, newEndDateTime);
 
       if (conflictingRes) {
-        alert(`❌ 선택하신 시간에 이미 예약된 건이 존재합니다!\n\n• 차량: ${conflictingRes.vehicle}\n• 기존 예약자: ${conflictingRes.userName} (${conflictingRes.dept})\n• 기존 예약시간: ${conflictingRes.startDate} ${conflictingRes.startTime} ~ ${conflictingRes.endDate} ${conflictingRes.endTime}\n\n다른 시간을 선택하시거나 예약자에게 문의해 주세요.`);
+        alert(`❌ 선택하신 시간에 이미 예약된 건이 존재합니다!\n\n• 차량: ${conflictingRes.vehicle}\n• 기존 예약자: ${conflictingRes.userName} (${conflictingRes.dept})\n• 기존 예약시간: ${conflictingRes.startDate} ${conflictingRes.startTime} ~ ${conflictingRes.endDate} ${conflictingRes.endTime}`);
         return;
       }
+
+      const passwordVal = document.getElementById("userPassword").value;
 
       const newRes = {
         id: Date.now(),
@@ -432,6 +456,7 @@
         dept: document.getElementById("userDept").value || "소속 미기재",
         phone: document.getElementById("userPhone").value,
         purpose: document.getElementById("userPurpose").value,
+        password: passwordVal,
         createdAt: new Date().toISOString()
       };
 
@@ -453,6 +478,15 @@
     });
 
     function deleteReservation(resObj) {
+      const inputPwd = prompt(`예약 신청 시 설정한 비밀번호를 입력해 주세요.`);
+      
+      if (inputPwd === null) return;
+
+      if (resObj.password && inputPwd !== resObj.password) {
+        alert("❌ 비밀번호가 일치하지 않습니다. 본인만 삭제할 수 있습니다.");
+        return;
+      }
+
       if (confirm(`[${resObj.vehicle}] ${resObj.startDate} ~ ${resObj.endDate} 예약을 정말 취소하시겠습니까?`)) {
         if (db && resObj.fbKey) {
           db.ref("ywam_reservations/" + resObj.fbKey).remove();
@@ -463,7 +497,7 @@
         }
 
         sendGoogleChatWebhook(resObj, "DELETE");
-        alert("예약이 취소되었습니다.");
+        alert("예약이 정상적으로 취소되었습니다.");
         renderCalendar();
       }
     }

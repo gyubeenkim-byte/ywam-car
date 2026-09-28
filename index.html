@@ -19,6 +19,7 @@
     .accent-green-hover:hover { background-color: #00e676; }
     .range-selected { background-color: rgba(0, 200, 83, 0.25); color: #00c853; font-weight: bold; }
     .range-start-end { background-color: #00c853 !important; color: #ffffff !important; font-weight: bold; }
+    select option:disabled { color: #666666 !important; background-color: #1a1a1a !important; }
   </style>
 </head>
 <body class="max-w-md mx-auto min-h-screen flex flex-col pb-10 border-x border-gray-800 shadow-2xl">
@@ -194,12 +195,14 @@
     let webhookUrl = localStorage.getItem("google_chat_webhook") || DEFAULT_WEBHOOK_URL;
     let firebaseConfigRaw = localStorage.getItem("firebase_config") || DEFAULT_FIREBASE_CONFIG;
 
+    // 00:00 ~ 24:00 (30분 단위)
     const timeSlots = [];
-    for (let h = 8; h <= 21; h++) {
+    for (let h = 0; h < 24; h++) {
       const hourStr = h < 10 ? `0${h}` : `${h}`;
       timeSlots.push(`${hourStr}:00`);
       timeSlots.push(`${hourStr}:30`);
     }
+    timeSlots.push("24:00");
 
     const calendarDays = document.getElementById("calendarDays");
     const currentMonthStr = document.getElementById("currentMonthStr");
@@ -220,6 +223,7 @@
       
       vehicleSelect.addEventListener("change", () => updateTimeSelectOptions());
       startTimeSelect.addEventListener("change", () => updateTimeSelectOptions());
+      endTimeSelect.addEventListener("change", () => updateTimeSelectOptions());
     });
 
     function initFirebase() {
@@ -250,7 +254,16 @@
       renderReservationList();
     }
 
-    // 예약시간 중복 검증 알고리즘 강화
+    function parseTimeMs(dateStr, timeStr) {
+      if (!dateStr || !timeStr) return 0;
+      if (timeStr === "24:00") {
+        const d = new Date(`${dateStr}T00:00:00`);
+        d.setDate(d.getDate() + 1);
+        return d.getTime();
+      }
+      return new Date(`${dateStr}T${timeStr}:00`).getTime();
+    }
+
     function updateTimeSelectOptions() {
       const selectedVehicle = vehicleSelect.value;
       const effectiveStartDate = startDateStr;
@@ -264,52 +277,28 @@
 
       const activeReservations = reservations.filter(r => r.vehicle === selectedVehicle);
 
+      // 1. 출발 시각 옵션 생성
       timeSlots.forEach(t => {
         let isStartDisabled = false;
-        let isEndDisabled = false;
-
-        if (effectiveStartDate) {
-          const checkStartMs = new Date(`${effectiveStartDate}T${t}:00`).getTime();
+        if (t === "24:00") {
+          isStartDisabled = true; 
+        } else if (effectiveStartDate) {
+          const checkStartMs = parseTimeMs(effectiveStartDate, t);
           isStartDisabled = activeReservations.some(res => {
-            const resStartMs = new Date(`${res.startDate}T${res.startTime}:00`).getTime();
-            const resEndMs = new Date(`${res.endDate}T${res.endTime}:00`).getTime();
+            const resStartMs = parseTimeMs(res.startDate, res.startTime);
+            const resEndMs = parseTimeMs(res.endDate, res.endTime);
             return checkStartMs >= resStartMs && checkStartMs < resEndMs;
           });
         }
 
-        if (effectiveEndDate) {
-          const checkEndMs = new Date(`${effectiveEndDate}T${t}:00`).getTime();
-          isEndDisabled = activeReservations.some(res => {
-            const resStartMs = new Date(`${res.startDate}T${res.startTime}:00`).getTime();
-            const resEndMs = new Date(`${res.endDate}T${res.endTime}:00`).getTime();
-            return checkEndMs > resStartMs && checkEndMs <= resEndMs;
-          });
-        }
-
-        // 출발 시각 옵션 추가
         const startOpt = document.createElement("option");
         startOpt.value = t;
-        startOpt.textContent = isStartDisabled ? `${t} (이미 예약됨)` : t;
-        if (isStartDisabled) {
-          startOpt.disabled = true;
-          startOpt.style.color = "#888888";
-          startOpt.style.backgroundColor = "#1a1a1a";
-        }
+        startOpt.textContent = isStartDisabled ? `${t} (예약됨)` : t;
+        startOpt.disabled = isStartDisabled;
         startTimeSelect.appendChild(startOpt);
-
-        // 반납 시각 옵션 추가
-        const endOpt = document.createElement("option");
-        endOpt.value = t;
-        endOpt.textContent = isEndDisabled ? `${t} (이미 예약됨)` : t;
-        if (isEndDisabled) {
-          endOpt.disabled = true;
-          endOpt.style.color = "#888888";
-          endOpt.style.backgroundColor = "#1a1a1a";
-        }
-        endTimeSelect.appendChild(endOpt);
       });
 
-      // 선택 가능한 첫 번째 유효값 자동 선택
+      // 출발 시각 유효값 세팅
       if (currentStartVal && startTimeSelect.querySelector(`option[value="${currentStartVal}"]:not([disabled])`)) {
         startTimeSelect.value = currentStartVal;
       } else {
@@ -317,16 +306,42 @@
         if (firstValidStart) startTimeSelect.value = firstValidStart.value;
       }
 
+      const selectedStartMs = parseTimeMs(effectiveStartDate, startTimeSelect.value);
+
+      // 2. 반납 시각 옵션 생성 (선택된 출발 시각 이후여야 함)
+      timeSlots.forEach(t => {
+        let isEndDisabled = false;
+        if (t === "00:00") {
+          isEndDisabled = true;
+        } else if (effectiveEndDate) {
+          const checkEndMs = parseTimeMs(effectiveEndDate, t);
+
+          // 출발 시각보다 이전이거나 같은 시간은 선택 불가
+          if (checkEndMs <= selectedStartMs) {
+            isEndDisabled = true;
+          } else {
+            // 출발 시각과 반납 시각 사이 구간에 기존 예약이 걸치는지 판별
+            isEndDisabled = activeReservations.some(res => {
+              const resStartMs = parseTimeMs(res.startDate, res.startTime);
+              const resEndMs = parseTimeMs(res.endDate, res.endTime);
+              return selectedStartMs < resEndMs && checkEndMs > resStartMs;
+            });
+          }
+        }
+
+        const endOpt = document.createElement("option");
+        endOpt.value = t;
+        endOpt.textContent = isEndDisabled ? `${t} (선택불가)` : t;
+        endOpt.disabled = isEndDisabled;
+        endTimeSelect.appendChild(endOpt);
+      });
+
+      // 반납 시각 유효값 세팅
       if (currentEndVal && endTimeSelect.querySelector(`option[value="${currentEndVal}"]:not([disabled])`)) {
         endTimeSelect.value = currentEndVal;
       } else {
-        const validEndOpts = Array.from(endTimeSelect.querySelectorAll("option:not([disabled])"));
-        const validAfterStart = validEndOpts.find(opt => opt.value > startTimeSelect.value);
-        if (validAfterStart) {
-          endTimeSelect.value = validAfterStart.value;
-        } else if (validEndOpts.length > 0) {
-          endTimeSelect.value = validEndOpts[validEndOpts.length - 1].value;
-        }
+        const firstValidEnd = endTimeSelect.querySelector("option:not([disabled])");
+        if (firstValidEnd) endTimeSelect.value = firstValidEnd.value;
       }
     }
 
@@ -396,13 +411,13 @@
       renderCalendar();
     }
 
-    function checkReservationConflict(newVehicle, newStart, newEnd) {
+    function checkReservationConflict(newVehicle, newStartMs, newEndMs) {
       for (const res of reservations) {
         if (res.vehicle === newVehicle) {
-          const resStart = new Date(`${res.startDate}T${res.startTime}:00`).getTime();
-          const resEnd = new Date(`${res.endDate}T${res.endTime}:00`).getTime();
+          const resStartMs = parseTimeMs(res.startDate, res.startTime);
+          const resEndMs = parseTimeMs(res.endDate, res.endTime);
 
-          if (newStart < resEnd && newEnd > resStart) {
+          if (newStartMs < resEndMs && newEndMs > resStartMs) {
             return res;
           }
         }
@@ -427,8 +442,8 @@
         return;
       }
 
-      const newStartDateTime = new Date(`${startDateStr}T${startTimeVal}:00`).getTime();
-      const newEndDateTime = new Date(`${finalEndDate}T${endTimeVal}:00`).getTime();
+      const newStartDateTime = parseTimeMs(startDateStr, startTimeVal);
+      const newEndDateTime = parseTimeMs(finalEndDate, endTimeVal);
 
       if (newEndDateTime <= newStartDateTime) {
         alert("반납 시각은 출발 시각보다 이후여야 합니다.");

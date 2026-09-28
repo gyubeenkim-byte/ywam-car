@@ -119,7 +119,7 @@
         <textarea id="userPurpose" required rows="2" placeholder="예: 수련회 장소 답사 및 물품 수거" class="w-full bg-input text-white text-sm rounded-lg p-2.5 border border-gray-700 focus:outline-none focus:border-emerald-500"></textarea>
       </div>
 
-      <!-- 비밀번호 입력란 강조 및 명확한 가시성 확보 -->
+      <!-- 비밀번호 입력란 가시성 강화 -->
       <div class="space-y-1 bg-card p-3 rounded-xl border border-gray-700">
         <label class="block text-xs text-emerald-400 font-semibold flex items-center gap-1.5">
           <i class="fa-solid fa-lock text-xs"></i> 삭제 비밀번호 <span class="text-emerald-500">* (본인 확인용)</span>
@@ -199,7 +199,7 @@
     let webhookUrl = localStorage.getItem("google_chat_webhook") || DEFAULT_WEBHOOK_URL;
     let firebaseConfigRaw = localStorage.getItem("firebase_config") || DEFAULT_FIREBASE_CONFIG;
 
-    // 00:00 ~ 24:00 (하루 전체 24시간 30분 단위 생성)
+    // 00:00 ~ 24:00 (30분 단위)
     const timeSlots = [];
     for (let h = 0; h < 24; h++) {
       const hourStr = h < 10 ? `0${h}` : `${h}`;
@@ -281,12 +281,12 @@
 
       const activeReservations = reservations.filter(r => r.vehicle === selectedVehicle);
 
-      // 1. 출발 시각 옵션 생성 (00:00 ~ 23:30)
+      // 1. 출발 시각 옵션 생성 (00:00 ~ 23:30, 24:00 제외)
       timeSlots.forEach(t => {
+        if (t === "24:00") return; // 출발 시각에는 24:00 제외
+
         let isStartDisabled = false;
-        if (t === "24:00") {
-          isStartDisabled = true; 
-        } else if (effectiveStartDate) {
+        if (effectiveStartDate) {
           const checkStartMs = parseTimeMs(effectiveStartDate, t);
           isStartDisabled = activeReservations.some(res => {
             const resStartMs = parseTimeMs(res.startDate, res.startTime);
@@ -312,12 +312,12 @@
 
       const selectedStartMs = parseTimeMs(effectiveStartDate, startTimeSelect.value);
 
-      // 2. 반납 시각 옵션 생성 (00:30 ~ 24:00)
+      // 2. 반납 시각 옵션 생성 (00:30 ~ 24:00, 00:00 제외)
       timeSlots.forEach(t => {
+        if (t === "00:00") return; // 반납 시각에는 00:00 제외
+
         let isEndDisabled = false;
-        if (t === "00:00") {
-          isEndDisabled = true;
-        } else if (effectiveEndDate) {
+        if (effectiveEndDate) {
           const checkEndMs = parseTimeMs(effectiveEndDate, t);
 
           if (checkEndMs <= selectedStartMs) {
@@ -495,7 +495,6 @@
     });
 
     function deleteReservation(resObj) {
-      // 🔒 예약삭제 시 본인 확인 비밀번호 팝업
       const inputPwd = prompt(`예약 신청 시 설정하셨던 삭제 비밀번호를 입력해 주세요.`);
       
       if (inputPwd === null) return;

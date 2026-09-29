@@ -24,39 +24,61 @@
 </head>
 <body class="max-w-md mx-auto min-h-screen flex flex-col pb-10 border-x border-gray-800 shadow-2xl">
 
-  <!-- 🚨 초기 접속 시 나타나는 5초 대기 + 체크박스 동의 모달 -->
+  <!-- 🚨 초기 접속 시 나타나는 5초 대기 + 이용 수칙 모달 -->
   <div id="rulesModal" class="fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 z-50">
     <div class="bg-card w-full max-w-sm rounded-2xl p-5 border border-emerald-500/30 space-y-4 text-left shadow-2xl">
       <div class="flex items-center justify-between border-b border-gray-800 pb-3">
         <div class="flex items-center space-x-2 text-emerald-400">
           <i class="fa-solid fa-clipboard-check text-xl"></i>
-          <h3 class="font-bold text-base text-white">가덕 YWAM BASE 차량 이용 수칙</h3>
+          <h3 class="font-bold text-base text-white">YWAM가덕 차량 사용 신청서</h3>
         </div>
         <span id="timerBadge" class="text-[11px] bg-emerald-950 text-emerald-400 border border-emerald-700/50 px-2 py-0.5 rounded-full font-bold">5초 대기</span>
       </div>
 
+      <!-- 이용 수칙 상세 안내문 -->
       <div class="space-y-2.5 text-xs text-gray-300 leading-relaxed max-h-[50vh] overflow-y-auto pr-1">
-        <div class="bg-input/60 p-2.5 rounded-lg border border-gray-800">
-          <p class="font-bold text-emerald-400 mb-1">1. 주유 및 차량 상태 확인</p>
-          <p>• 반납 시 다음 사용자를 위해 연료는 최소 반 이상 채워주세요.</p>
-          <p>• 운행 전후 차량의 외관 상태 및 차량 키 반납 위치를 확인해 주세요.</p>
+        <div class="bg-emerald-950/40 p-2.5 rounded-lg border border-emerald-800/50 text-[11px] text-emerald-200">
+          <p class="font-bold mb-1">✝️ 하나님의 선교에 동참하시는 동역자 여러분을 환영합니다.</p>
+          <p>YWAM 가덕의 차량은 사역을 위해 자비량으로 운영·관리되며, 제출해 주시는 사용 재정은 오직 안전 운행과 유지 관리 목적으로만 투명하게 사용됩니다.</p>
         </div>
 
-        <div class="bg-input/60 p-2.5 rounded-lg border border-gray-800">
-          <p class="font-bold text-emerald-400 mb-1">2. 청결 유지 및 금연</p>
-          <p>• 차내 쓰레기는 반드시 회수하여 정리해 주세요.</p>
-          <p>• 차량 내 흡연은 절대 금지합니다.</p>
+        <div class="bg-input/60 p-2.5 rounded-lg border border-gray-800 space-y-1">
+          <p class="font-bold text-emerald-400">1. 법규 준수</p>
+          <p>• 과속 및 신호 위반 금지 (과태료 발생 시 운전자 부담)</p>
         </div>
 
-        <div class="bg-input/60 p-2.5 rounded-lg border border-gray-800">
-          <p class="font-bold text-emerald-400 mb-1">3. 정시 반납 및 시간 엄수</p>
-          <p>• 다음 예약자를 위해 예약한 반납 시각을 반드시 지켜주세요.</p>
-          <p>• 불가피하게 지연될 경우 예약 수정 또는 담당자에게 미리 연락해 주세요.</p>
+        <div class="bg-input/60 p-2.5 rounded-lg border border-gray-800 space-y-1">
+          <p class="font-bold text-emerald-400">2. 계기판 거리 기록</p>
+          <p>• 인수 및 반납 시 계기판 주행거리를 꼭 기록해 주세요.</p>
         </div>
 
-        <div class="bg-input/60 p-2.5 rounded-lg border border-gray-800">
-          <p class="font-bold text-emerald-400 mb-1">4. 사고 및 고장 발생 시</p>
-          <p>• 이상 발생 즉시 BASE 차량 관리 담당자에게 알려주시기 바랍니다.</p>
+        <div class="bg-input/60 p-2.5 rounded-lg border border-gray-800 space-y-1">
+          <p class="font-bold text-emerald-400">3. 주유 및 청결 유지</p>
+          <p>• 차량 내부 쓰레기는 수거하고, 연료는 사용한 만큼 주유 후 반납해 주세요.</p>
+          <p class="text-[11px] text-gray-400">※ 주유하지 못하실 경우, 베이스 행정 계좌로 주유비를 입금해 주시기 바랍니다.</p>
+          <p class="text-[11px] text-amber-300 font-mono bg-black/40 p-1.5 rounded mt-1">계좌: 국민은행 701801-04-113534<br>(사)아이더블유티코리아</p>
+        </div>
+
+        <div class="bg-input/60 p-2.5 rounded-lg border border-gray-800 space-y-1">
+          <p class="font-bold text-emerald-400">4. 이상 보고 및 관리자 연락</p>
+          <p>• 차량 파손이나 이상 발견 시 즉시 관리자에게 연락해 주세요.</p>
+          <p class="text-[11px] text-gray-400">📞 홍택화 간사: 010-8753-7223<br>📞 김규빈 간사: 010-9461-9230</p>
+        </div>
+
+        <div class="bg-input/60 p-2.5 rounded-lg border border-gray-800 space-y-1">
+          <p class="font-bold text-emerald-400">5. 시간 엄수</p>
+          <p>• 다음 사역자를 위해 예약된 반납 시간을 꼭 지켜주세요.</p>
+        </div>
+
+        <div class="bg-input/60 p-2.5 rounded-lg border border-amber-900/50 space-y-1">
+          <p class="font-bold text-amber-400">6. 탑차 진입 높이 제한</p>
+          <p>• 탑차 높이는 2.5m 이상 통행이 가능한 장소만 운행 가능합니다. (2.5m 이하 진입 불가)</p>
+        </div>
+
+        <div class="bg-input/60 p-2.5 rounded-lg border border-gray-800 space-y-1">
+          <p class="font-bold text-emerald-400">7. 운전자 연령 제한</p>
+          <p>• 탑차 운전자: 만 25세 이상 가능</p>
+          <p>• 카니발 운전자: 약관에 규정된 연령 제한 준수</p>
         </div>
       </div>
 
@@ -278,7 +300,7 @@
     const reservationForm = document.getElementById("reservationForm");
 
     document.addEventListener("DOMContentLoaded", () => {
-      startRulesSequence(); // 5초 대기 -> 체크박스 -> 동의 로직 실행
+      startRulesSequence();
       initFirebase();
       renderCalendar();
       if (!db) {
@@ -293,7 +315,6 @@
       document.getElementById("cancelEditBtn").addEventListener("click", () => resetEditMode());
     });
 
-    // ⏱️ 단계별 이용 수칙 동의 제어 함수 (5초 대기 -> 체크박스 클릭 -> 동의 버튼 클릭)
     function startRulesSequence() {
       let timeLeft = 5;
       const timerBadge = document.getElementById("timerBadge");

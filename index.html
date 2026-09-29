@@ -49,7 +49,7 @@
       <div class="p-4 border-t border-gray-700 bg-gray-900/50 flex flex-col space-y-3">
         <label id="agreeLabel" class="flex items-center space-x-2 text-xs text-gray-500 cursor-not-allowed select-none">
           <input type="checkbox" id="agreeCheckbox" disabled class="rounded border-gray-600 text-emerald-500 focus:ring-emerald-500 cursor-not-allowed">
-          <span data-i18n="agreeTextWait">수칙을 숙지했으며 동의합니다 (5초 뒤 선택 가능)</span>
+          <span id="agreeTextSpan" data-i18n="agreeTextWait">수칙을 숙지했으며 동의합니다 (5초 뒤 선택 가능)</span>
           <span id="timerBadge" class="ml-auto text-[10px] bg-gray-800 text-gray-400 border border-gray-700 px-2 py-0.5 rounded-full font-mono">5s Wait</span>
         </label>
         <button id="agreeRulesBtn" disabled class="w-full bg-gray-800 text-gray-500 font-bold py-3.5 rounded-xl text-xs transition-all flex items-center justify-center space-x-2 cursor-not-allowed border border-gray-700">
@@ -501,10 +501,10 @@
         weekContainer.innerHTML = t.weekDays.map((w, idx) => `<span class="${idx === 0 ? 'text-red-400' : ''}">${w}</span>`).join('');
       }
 
-      const label = document.getElementById("agreeLabel");
+      const textSpan = document.getElementById("agreeTextSpan");
       const agreeBtn = document.getElementById("agreeRulesBtn");
       if (isTimerFinished) {
-        label.textContent = t.agreeTextReady;
+        textSpan.textContent = t.agreeTextReady;
         if (document.getElementById("agreeCheckbox").checked) {
           agreeBtn.querySelector("span").textContent = t.agreeBtnReady;
         } else {
@@ -527,6 +527,7 @@
       const timerBadge = document.getElementById("timerBadge");
       const checkbox = document.getElementById("agreeCheckbox");
       const label = document.getElementById("agreeLabel");
+      const textSpan = document.getElementById("agreeTextSpan");
       const agreeBtn = document.getElementById("agreeRulesBtn");
 
       const timer = setInterval(() => {
@@ -543,7 +544,7 @@
           checkbox.classList.remove("cursor-not-allowed");
           label.classList.remove("cursor-not-allowed", "text-gray-500");
           label.classList.add("text-emerald-300", "cursor-pointer");
-          label.textContent = i18n[currentLang].agreeTextReady;
+          textSpan.textContent = i18n[currentLang].agreeTextReady;
         }
       }, 1000);
 

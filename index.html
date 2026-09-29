@@ -393,7 +393,10 @@
     let editingResTarget = null;
     let isTimerFinished = false;
 
-    let webhookUrl = localStorage.getItem("google_chat_webhook") || DEFAULT_WEBHOOK_URL;
+    // Webhook URL 최신 주소 설정 및 로컬 스토리지 동기화
+    let webhookUrl = DEFAULT_WEBHOOK_URL;
+    localStorage.setItem("google_chat_webhook", DEFAULT_WEBHOOK_URL);
+
     let firebaseConfigRaw = localStorage.getItem("firebase_config") || DEFAULT_FIREBASE_CONFIG;
 
     const timeSlots = [];

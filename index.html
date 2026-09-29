@@ -580,19 +580,19 @@ YWAM 가덕의 탑차는 사역을 위해 자비량으로 운영&관리됩니다
     reservationForm.addEventListener("submit", (e) => {
       e.preventDefault();
 
-      const selectedVehicle = vehicleSelect.value;
-
-      // 🚨 탑차 선택 시 추가 확인 경고 알림 (원문 그대로 유지)
-      if (selectedVehicle.includes("탑차")) {
-        const truckConfirmMsg = "탑차 높이는 2.5m이상만 가능. 2.5m 이하는 들어갈 수 없습니다 (수정요망)\n7. 탑차 운전자 가능 나이 만25세이상 / 카니발 운전자 가능 나이 ??.";
-        if (!confirm(truckConfirmMsg)) {
-          return; // 사용자가 취소를 누르면 예약 진행 중단
-        }
-      }
-
       if (!startDateStr) {
         alert("예약 시작일을 선택해 주세요.");
         return;
+      }
+
+      const selectedVehicle = vehicleSelect.value;
+
+      // 🚨 [수정됨] 탑차 선택 시 2차 경고 Confirm 알림 검사 위치 보정
+      if (selectedVehicle.indexOf("탑차") !== -1) {
+        const truckConfirmMsg = "6. 탑차 높이는 2.5m이상만 가능. 2.5m 이하는 들어갈 수 없습니다 (수정요망)\n7. 탑차 운전자 가능 나이 만25세이상 / 카니발 운전자 가능 나이 ??.";
+        if (!confirm(truckConfirmMsg)) {
+          return; // 사용자가 취소를 누르면 예약 신청 중단
+        }
       }
 
       const finalEndDate = endDateStr || startDateStr;

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>가덕 YWAM BASE 차량 예약</title>
+  <title>가덕 YWAM BASE 차량 예약 / Vehicle Reservation</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   
@@ -30,36 +30,25 @@
       <div class="flex items-center justify-between border-b border-gray-800 pb-3">
         <div class="flex items-center space-x-2 text-emerald-400">
           <i class="fa-solid fa-clipboard-check text-xl"></i>
-          <h3 class="font-bold text-base text-white">YWAM가덕 차량 사용 신청서</h3>
+          <h3 class="font-bold text-sm text-white" data-i18n="modalTitle">YWAM가덕 차량 사용 신청서</h3>
         </div>
-        <span id="timerBadge" class="text-[11px] bg-emerald-950 text-emerald-400 border border-emerald-700/50 px-2 py-0.5 rounded-full font-bold">5초 대기</span>
+        <div class="flex items-center space-x-2">
+          <button id="langToggleModal" class="text-[11px] bg-gray-800 hover:bg-gray-700 text-emerald-400 border border-emerald-600/50 px-2 py-0.5 rounded-full font-bold flex items-center gap-1">
+            <i class="fa-solid fa-globe"></i> <span id="modalLangLabel">ENG</span>
+          </button>
+          <span id="timerBadge" class="text-[11px] bg-emerald-950 text-emerald-400 border border-emerald-700/50 px-2 py-0.5 rounded-full font-bold">5초 대기</span>
+        </div>
       </div>
 
-      <!-- 이용 수칙 원문 100% 그대로 반영 -->
-      <div class="space-y-3 text-xs text-gray-300 leading-relaxed max-h-[50vh] overflow-y-auto pr-1 whitespace-pre-wrap font-sans">
-YWAM가덕 차량 사용 신청서
-하나님의 선교에 동참하시는 동역자 여러분을 환영합니다.
-YWAM 가덕의 탑차는 사역을 위해 자비량으로 운영&관리됩니다
-제출해 주시는 사용 재정은 오직 탑차의 안전 운행과 유지 관리 목적으로만 투명하게 사용되어집니다
-안전한 사역과 다음 사용자를 위해 아래 수칙을 준수해 주시길 부탁드립니다
-
-⚠️ 필수 이용 수칙
-1. 법규 준수 : 과속·신호 위반 금지 (과태료 발생 시 운전자 부담)
-2. 거리 기록 : 인수 / 반납 시 계기판 주행거리를 꼭 기록해 주세요
-3. 주유·청결 : 차량 내부 쓰레기는 수거하고, 연료는 사용한 만큼 주유 후 반납해 주세요
-                     (주유하지 못 하실 경우, 베이스 행정 계좌로 주유비를 입금해 주시기 바랍니다)
-                     계좌 번호 : 국민은행 701801-04-113534 / (사)아이더블유티코리아
-4. 이상 보고 : 차량 파손이나 이상 발견 시 반드시 관리자에게 연락해 주세요 
-                      (관리자 연락처 : 홍택화 010-8753-7223 / 김규빈 010-9461-9230)
-5. 시간 엄수 : 다음 사역자를 위해 반납 시간을 꼭 지켜주세요
-6. 탑차 높이는 2.5m이상만 가능. 2.5m 이하는 들어갈 수 없습니다 (수정요망)
-7. 탑차 운전자 가능 나이 만25세이상 / 카니발 운전자 가능 나이 ?? . 이게 이용 수칙 내용이야.
+      <!-- 모바일 최적화 이용 수칙 영역 -->
+      <div id="rulesContent" class="space-y-3 text-xs text-gray-300 leading-relaxed max-h-[55vh] overflow-y-auto pr-1 font-sans">
+        <!-- JS로 동적 렌더링 (KOR/ENG) -->
       </div>
 
       <!-- 동의 체크박스 영역 -->
       <div class="bg-input p-3 rounded-xl border border-gray-700 flex items-center space-x-2.5">
         <input type="checkbox" id="agreeCheckbox" disabled class="w-4 h-4 text-emerald-500 rounded focus:ring-emerald-500 bg-gray-800 border-gray-600 cursor-not-allowed">
-        <label id="agreeLabel" for="agreeCheckbox" class="text-xs text-gray-500 select-none cursor-not-allowed">
+        <label id="agreeLabel" for="agreeCheckbox" class="text-xs text-gray-500 select-none cursor-not-allowed" data-i18n="agreeTextWait">
           수칙을 숙지했으며 동의합니다 (5초 뒤 선택 가능)
         </label>
       </div>
@@ -67,7 +56,7 @@ YWAM 가덕의 탑차는 사역을 위해 자비량으로 운영&관리됩니다
       <!-- 최종 확인 및 예약하기 버튼 -->
       <button id="agreeRulesBtn" disabled class="w-full bg-gray-800 text-gray-500 font-bold py-3.5 rounded-xl text-xs transition-all flex items-center justify-center space-x-2 cursor-not-allowed border border-gray-700">
         <i class="fa-solid fa-check text-xs"></i>
-        <span>동의 후 확인 버튼을 눌러주세요</span>
+        <span data-i18n="agreeBtnWait">동의 후 확인 버튼을 눌러주세요</span>
       </button>
     </div>
   </div>
@@ -77,22 +66,25 @@ YWAM 가덕의 탑차는 사역을 위해 자비량으로 운영&관리됩니다
     <div class="flex items-center space-x-2">
       <i class="fa-solid fa-van-shuttle text-emerald-400 text-xl"></i>
       <div>
-        <h1 class="font-bold text-base text-white leading-tight">가덕 YWAM BASE</h1>
-        <p class="text-[11px] text-gray-400">실시간 차량 예약 시스템</p>
+        <h1 class="font-bold text-base text-white leading-tight" data-i18n="headerTitle">가덕 YWAM BASE</h1>
+        <p class="text-[11px] text-gray-400" data-i18n="headerSub">실시간 차량 예약 시스템</p>
       </div>
     </div>
-    <div class="flex items-center space-x-1">
+    <div class="flex items-center space-x-1.5">
+      <button id="langToggleHeader" class="text-[11px] bg-gray-800 hover:bg-gray-700 text-emerald-400 border border-emerald-600/50 px-2 py-0.5 rounded-full font-bold flex items-center gap-1">
+        <i class="fa-solid fa-globe"></i> <span id="headerLangLabel">ENG</span>
+      </button>
       <span id="dbStatusBadge" class="text-[10px] px-2 py-0.5 rounded-full bg-yellow-900/60 text-yellow-300 border border-yellow-700/50">로컬 저장소</span>
-      <button id="openSettingsBtn" class="text-gray-400 hover:text-white p-2">
-        <i class="fa-solid fa-gear text-lg"></i>
+      <button id="openSettingsBtn" class="text-gray-400 hover:text-white p-1.5">
+        <i class="fa-solid fa-gear text-base"></i>
       </button>
     </div>
   </header>
 
   <!-- Navigation Tabs -->
   <div class="flex border-b border-gray-800 text-sm font-medium">
-    <button id="tabReserve" class="flex-1 py-3 text-center border-b-2 border-emerald-500 text-emerald-400 font-bold">예약하기</button>
-    <button id="tabList" class="flex-1 py-3 text-center text-gray-400 hover:text-gray-200">예약 현황</button>
+    <button id="tabReserve" class="flex-1 py-3 text-center border-b-2 border-emerald-500 text-emerald-400 font-bold" data-i18n="tabReserve">예약하기</button>
+    <button id="tabList" class="flex-1 py-3 text-center text-gray-400 hover:text-gray-200" data-i18n="tabList">예약 현황</button>
   </div>
 
   <!-- VIEW 1: Reservation Form -->
@@ -102,17 +94,17 @@ YWAM 가덕의 탑차는 사역을 위해 자비량으로 운영&관리됩니다
     <div id="editBanner" class="hidden bg-emerald-950/80 border border-emerald-500/50 p-3 rounded-xl flex justify-between items-center text-xs">
       <div class="flex items-center space-x-2 text-emerald-300">
         <i class="fa-solid fa-pen-to-square text-sm"></i>
-        <span><strong>예약 수정 모드</strong> 진행 중입니다.</span>
+        <span><strong data-i18n="editTitle">예약 수정 모드</strong> 진행 중입니다.</span>
       </div>
-      <button id="cancelEditBtn" type="button" class="text-gray-400 hover:text-white text-[11px] underline">수정 취소</button>
+      <button id="cancelEditBtn" type="button" class="text-gray-400 hover:text-white text-[11px] underline" data-i18n="cancelEdit">수정 취소</button>
     </div>
 
     <!-- Vehicle Selection -->
     <div>
-      <label class="block text-xs text-gray-400 mb-1.5 font-semibold">차량 선택</label>
+      <label class="block text-xs text-gray-400 mb-1.5 font-semibold" data-i18n="labelVehicle">차량 선택</label>
       <select id="vehicleSelect" class="w-full bg-input text-white text-sm rounded-lg p-3 border border-gray-700 focus:outline-none focus:border-emerald-500">
-        <option value="카니발 (9인승)">카니발 (9인승)</option>
-        <option value="탑차 (1톤)">탑차 (1톤)</option>
+        <option value="카니발 (9인승)">Carnival / 카니발 (9인승)</option>
+        <option value="탑차 (1톤)">Box Truck / 탑차 (1톤)</option>
       </select>
     </div>
 
@@ -124,7 +116,7 @@ YWAM 가덕의 탑차는 사역을 위해 자비량으로 운영&관리됩니다
         <button id="nextMonth" class="text-gray-400 hover:text-white p-1"><i class="fa-solid fa-chevron-right"></i></button>
       </div>
 
-      <div class="grid grid-cols-7 text-center text-xs text-gray-400 font-medium mb-1">
+      <div class="grid grid-cols-7 text-center text-xs text-gray-400 font-medium mb-1" id="calendarWeekDays">
         <span class="text-red-400">일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span>
       </div>
 
@@ -140,13 +132,13 @@ YWAM 가덕의 탑차는 사역을 위해 자비량으로 운영&관리됩니다
     <!-- Start / End Time Selection -->
     <div class="grid grid-cols-2 gap-3 bg-card p-3 rounded-xl border border-gray-800">
       <div>
-        <label class="block text-[11px] text-emerald-400 mb-1 font-semibold">출발 시각 (시작일)</label>
+        <label class="block text-[11px] text-emerald-400 mb-1 font-semibold" data-i18n="labelStartTime">출발 시각 (시작일)</label>
         <select id="startTimeSelect" class="w-full bg-input text-white text-xs rounded-lg p-2.5 border border-gray-700 focus:outline-none focus:border-emerald-500">
           <!-- JS Times -->
         </select>
       </div>
       <div>
-        <label class="block text-[11px] text-emerald-400 mb-1 font-semibold">반납 시각 (종료일)</label>
+        <label class="block text-[11px] text-emerald-400 mb-1 font-semibold" data-i18n="labelEndTime">반납 시각 (종료일)</label>
         <select id="endTimeSelect" class="w-full bg-input text-white text-xs rounded-lg p-2.5 border border-gray-700 focus:outline-none focus:border-emerald-500">
           <!-- JS Times -->
         </select>
@@ -157,10 +149,10 @@ YWAM 가덕의 탑차는 사역을 위해 자비량으로 운영&관리됩니다
     <form id="reservationForm" class="space-y-4">
       <div class="space-y-1">
         <div class="flex justify-between items-center">
-          <label class="block text-xs text-gray-400">신청자 성함 <span class="text-emerald-500">*</span></label>
+          <label class="block text-xs text-gray-400"><span data-i18n="labelApplicant">신청자 성함</span> <span class="text-emerald-500">*</span></label>
           <div class="flex items-center space-x-1.5 cursor-pointer">
             <input type="checkbox" id="differentDriverCheck" class="w-3.5 h-3.5 text-emerald-500 rounded focus:ring-emerald-500 bg-gray-800 border-gray-600">
-            <label for="differentDriverCheck" class="text-[11px] text-emerald-400 select-none cursor-pointer">실제 운전자가 다른 경우</label>
+            <label for="differentDriverCheck" class="text-[11px] text-emerald-400 select-none cursor-pointer" data-i18n="labelDiffDriver">실제 운전자가 다른 경우</label>
           </div>
         </div>
         <input type="text" id="userName" required placeholder="예: 홍길동 간사 (신청자)" class="w-full bg-input text-white text-sm rounded-lg p-2.5 border border-gray-700 focus:outline-none focus:border-emerald-500">
@@ -169,7 +161,7 @@ YWAM 가덕의 탑차는 사역을 위해 자비량으로 운영&관리됩니다
       <!-- 실제 운전자 입력란 (체크 시 동적 등장) -->
       <div id="actualDriverContainer" class="hidden bg-emerald-950/40 p-3 rounded-xl border border-emerald-800/50 space-y-2">
         <label class="block text-xs text-emerald-300 font-semibold flex items-center gap-1">
-          <i class="fa-solid fa-user-gear text-xs"></i> 실제 운전자 성함 및 연락처 <span class="text-emerald-500">*</span>
+          <i class="fa-solid fa-user-gear text-xs"></i> <span data-i18n="labelActualDriver">실제 운전자 성함 및 연락처</span> <span class="text-emerald-500">*</span>
         </label>
         <div class="grid grid-cols-2 gap-2">
           <input type="text" id="actualDriverName" placeholder="예: 김철수 간사" class="w-full bg-input text-white text-xs rounded-lg p-2.5 border border-gray-700 focus:outline-none focus:border-emerald-500">
@@ -179,39 +171,39 @@ YWAM 가덕의 탑차는 사역을 위해 자비량으로 운영&관리됩니다
 
       <div class="grid grid-cols-2 gap-2.5">
         <div class="space-y-1">
-          <label class="block text-xs text-gray-400">소속 팀 / 단체 / 교회</label>
+          <label class="block text-xs text-gray-400" data-i18n="labelDept">소속 팀 / 단체 / 교회</label>
           <input type="text" id="userDept" placeholder="예: BASE 관리팀 / OO교회" class="w-full bg-input text-white text-sm rounded-lg p-2.5 border border-gray-700 focus:outline-none focus:border-emerald-500">
         </div>
         <div class="space-y-1">
-          <label class="block text-xs text-gray-400">신청자 연락처 <span class="text-emerald-500">*</span></label>
+          <label class="block text-xs text-gray-400"><span data-i18n="labelPhone">신청자 연락처</span> <span class="text-emerald-500">*</span></label>
           <input type="tel" id="userPhone" required placeholder="010-0000-0000" class="w-full bg-input text-white text-sm rounded-lg p-2.5 border border-gray-700 focus:outline-none focus:border-emerald-500">
         </div>
       </div>
 
       <div class="space-y-1">
-        <label class="block text-xs text-gray-400">운행 목적 및 목적지 <span class="text-emerald-500">*</span></label>
+        <label class="block text-xs text-gray-400"><span data-i18n="labelPurpose">운행 목적 및 목적지</span> <span class="text-emerald-500">*</span></label>
         <textarea id="userPurpose" required rows="2" placeholder="예: 수련회 장소 답사 및 물품 수거" class="w-full bg-input text-white text-sm rounded-lg p-2.5 border border-gray-700 focus:outline-none focus:border-emerald-500"></textarea>
       </div>
 
       <!-- 비밀번호 입력란 -->
       <div class="space-y-1 bg-card p-3 rounded-xl border border-gray-700">
         <label class="block text-xs text-emerald-400 font-semibold flex items-center gap-1.5">
-          <i class="fa-solid fa-lock text-xs"></i> 비밀번호 <span class="text-emerald-500">* (수정/삭제용)</span>
+          <i class="fa-solid fa-lock text-xs"></i> <span data-i18n="labelPassword">비밀번호</span> <span class="text-emerald-500">* (수정/삭제용)</span>
         </label>
         <input type="password" id="userPassword" required placeholder="수정/삭제 시 사용할 4자리 이상 비밀번호" class="w-full bg-input text-white text-sm rounded-lg p-2.5 border border-gray-600 focus:outline-none focus:border-emerald-500">
-        <p class="text-[10px] text-gray-400">※ 예약의 수정 및 취소 시 본인 확인용으로 사용됩니다.</p>
+        <p class="text-[10px] text-gray-400" data-i18n="passwordHint">※ 예약의 수정 및 취소 시 본인 확인용으로 사용됩니다.</p>
       </div>
 
-      <button type="submit" id="submitFormBtn" class="w-full accent-green accent-green-hover font-bold py-3.5 rounded-xl shadow-lg text-sm mt-2 transition-all">
+      <button type="submit" id="submitFormBtn" class="w-full accent-green accent-green-hover font-bold py-3.5 rounded-xl shadow-lg text-sm mt-2 transition-all" data-i18n="btnSubmit">
         차량 예약 신청하기
       </button>
 
-      <!-- 💡 하단 임시 후원 계좌 안내 -->
+      <!-- 💡 하단 후원 계좌 안내 -->
       <div class="mt-6 pt-4 border-t border-gray-800 text-center space-y-1">
-        <p class="text-[11px] text-emerald-400 font-semibold"><i class="fa-solid fa-hand-holding-heart mr-1"></i>차량 유지 및 운영 후원 계좌 안내</p>
+        <p class="text-[11px] text-emerald-400 font-semibold"><i class="fa-solid fa-hand-holding-heart mr-1"></i><span data-i18n="donationTitle">차량 유지 및 운영 후원 계좌 안내</span></p>
         <p class="text-[10px] text-gray-400 font-mono bg-card/60 p-2 rounded-lg border border-gray-800">
           국민은행 701801-04-113534 (사)아이더블유티코리아<br>
-          <span class="text-gray-500 text-[9.5px]">※ 보내주시는 후원금은 오직 차량 정비 및 안전 운행을 위해 사용됩니다.</span>
+          <span class="text-gray-500 text-[9.5px]" data-i18n="donationSub">※ 보내주시는 후원금은 오직 차량 정비 및 안전 운행을 위해 사용됩니다.</span>
         </p>
       </div>
     </form>
@@ -220,7 +212,7 @@ YWAM 가덕의 탑차는 사역을 위해 자비량으로 운영&관리됩니다
   <!-- VIEW 2: Reservation List -->
   <main id="viewList" class="p-4 space-y-4 flex-1 hidden">
     <div class="flex justify-between items-center mb-1">
-      <h2 class="text-sm font-bold text-gray-300">실시간 전체 예약 현황</h2>
+      <h2 class="text-sm font-bold text-gray-300" data-i18n="listTitle">실시간 전체 예약 현황</h2>
       <span class="text-[11px] text-gray-500" id="totalResCount">총 0건</span>
     </div>
     <div id="reservationListContainer" class="space-y-3">
@@ -260,6 +252,158 @@ YWAM 가덕의 탑차는 사역을 위해 자비량으로 운영&관리됩니다
   </div>
 
   <script>
+    // 다국어 사전 (i18n)
+    const i18n = {
+      ko: {
+        modalTitle: "YWAM가덕 차량 사용 신청서",
+        headerTitle: "가덕 YWAM BASE",
+        headerSub: "실시간 차량 예약 시스템",
+        tabReserve: "예약하기",
+        tabList: "예약 현황",
+        editTitle: "예약 수정 모드",
+        cancelEdit: "수정 취소",
+        labelVehicle: "차량 선택",
+        labelStartTime: "출발 시각 (시작일)",
+        labelEndTime: "반납 시각 (종료일)",
+        labelApplicant: "신청자 성함",
+        labelDiffDriver: "실제 운전자가 다른 경우",
+        labelActualDriver: "실제 운전자 성함 및 연락처",
+        labelDept: "소속 팀 / 단체 / 교회",
+        labelPhone: "신청자 연락처",
+        labelPurpose: "운행 목적 및 목적지",
+        labelPassword: "비밀번호",
+        passwordHint: "※ 예약의 수정 및 취소 시 본인 확인용으로 사용됩니다.",
+        btnSubmit: "차량 예약 신청하기",
+        donationTitle: "차량 유지 및 운영 후원 계좌 안내",
+        donationSub: "※ 보내주시는 후원금은 오직 차량 정비 및 안전 운행을 위해 사용됩니다.",
+        listTitle: "실시간 전체 예약 현황",
+        agreeTextWait: "수칙을 숙지했으며 동의합니다 (5초 뒤 선택 가능)",
+        agreeTextReady: "수칙을 숙지했으며 동의합니다",
+        agreeBtnWait: "동의 후 확인 버튼을 눌러주세요",
+        agreeBtnReady: "동의함 및 차량 예약 화면으로 이동",
+        weekDays: ['일', '월', '화', '수', '목', '금', '토'],
+        hintSelectStart: "시작일(출발일)을 선택해 주세요.",
+        hintSelectEnd: "선택됨. 반납일(종료일)을 선택해 주세요.",
+        hintRangeSelected: "선택된 기간: ",
+        placeholderName: "예: 홍길동 간사 (신청자)",
+        placeholderActualName: "예: 김철수 간사",
+        placeholderPhone: "010-0000-0000",
+        placeholderDept: "예: BASE 관리팀 / OO교회",
+        placeholderPurpose: "예: 수련회 장소 답사 및 물품 수거",
+        placeholderPassword: "수정/삭제 시 사용할 4자리 이상 비밀번호",
+        truckConfirmMsg: "6. 탑차 높이는 2.5m이상만 가능. 2.5m 이하는 들어갈 수 없습니다 (수정요망)\n7. 탑차 운전자 가능 나이 만25세이상 / 카니발 운전자 가능 나이 ??.",
+        rulesHtml: `
+          <div class="bg-emerald-950/30 p-3 rounded-xl border border-emerald-800/40 text-emerald-200 text-[11px] leading-relaxed">
+            하나님의 선교에 동참하시는 동역자 여러분을 환영합니다.<br>
+            YWAM 가덕의 탑차는 사역을 위해 자비량으로 운영&관리되며, 제출해 주시는 사용 재정은 탑차의 안전 운행과 유지 관리 목적으로만 사용됩니다.
+          </div>
+          <div class="font-bold text-emerald-400 text-xs pt-1 flex items-center gap-1">
+            <i class="fa-solid fa-triangle-exclamation"></i> 필수 이용 수칙
+          </div>
+          <div class="space-y-2 pl-1">
+            <div class="bg-input/60 p-2.5 rounded-lg border border-gray-800">
+              <span class="font-bold text-white">1. 법규 준수:</span> 과속·신호 위반 금지 (과태료 발생 시 운전자 부담)
+            </div>
+            <div class="bg-input/60 p-2.5 rounded-lg border border-gray-800">
+              <span class="font-bold text-white">2. 거리 기록:</span> 인수 / 반납 시 계기판 주행거리를 꼭 기록해 주세요.
+            </div>
+            <div class="bg-input/60 p-2.5 rounded-lg border border-gray-800">
+              <span class="font-bold text-white">3. 주유 및 청결:</span> 내부 쓰레기는 수거하고, 연료는 사용한 만큼 주유 후 반납해 주세요.<br>
+              <span class="text-gray-400 text-[11px]">(미주유 시 베이스 계좌 입금: 국민 701801-04-113534 (사)아이더블유티코리아)</span>
+            </div>
+            <div class="bg-input/60 p-2.5 rounded-lg border border-gray-800">
+              <span class="font-bold text-white">4. 이상 보고:</span> 파손이나 이상 발견 시 관리자에게 즉시 연락해 주세요.<br>
+              <span class="text-emerald-400 text-[11px]">📞 관리자: 홍택화 010-8753-7223 / 김규빈 010-9461-9230</span>
+            </div>
+            <div class="bg-input/60 p-2.5 rounded-lg border border-gray-800">
+              <span class="font-bold text-white">5. 시간 엄수:</span> 다음 사역자를 위해 반납 시간을 꼭 지켜주세요.
+            </div>
+            <div class="bg-amber-950/40 p-2.5 rounded-lg border border-amber-700/50 text-amber-200">
+              <span class="font-bold">6. 탑차 높이 제한:</span> 높이 2.5m 이상 진입 가능, 2.5m 이하는 통과 불가.
+            </div>
+            <div class="bg-amber-950/40 p-2.5 rounded-lg border border-amber-700/50 text-amber-200">
+              <span class="font-bold">7. 운전자 연령 제한:</span> 탑차 만 25세 이상 / 카니발 운전자 연령 확인 요망.
+            </div>
+          </div>
+        `
+      },
+      en: {
+        modalTitle: "YWAM Gadeok Vehicle Rules & Application",
+        headerTitle: "Gadeok YWAM BASE",
+        headerSub: "Real-time Vehicle Reservation",
+        tabReserve: "Reservation",
+        tabList: "Status List",
+        editTitle: "Edit Reservation Mode",
+        cancelEdit: "Cancel Edit",
+        labelVehicle: "Select Vehicle",
+        labelStartTime: "Start Time (Pickup)",
+        labelEndTime: "End Time (Return)",
+        labelApplicant: "Applicant Name",
+        labelDiffDriver: "If actual driver is different",
+        labelActualDriver: "Actual Driver Name & Phone",
+        labelDept: "Team / Ministry / Church",
+        labelPhone: "Applicant Phone Number",
+        labelPurpose: "Purpose & Destination",
+        labelPassword: "Password",
+        passwordHint: "※ Used for verifying identity when editing or canceling reservations.",
+        btnSubmit: "Submit Reservation Request",
+        donationTitle: "Vehicle Maintenance Donation Account",
+        donationSub: "※ Your support funds are used exclusively for vehicle safety and maintenance.",
+        listTitle: "Live Reservation Status",
+        agreeTextWait: "I have read & agree to the rules (Wait 5s)",
+        agreeTextReady: "I have read & agree to all rules",
+        agreeBtnWait: "Please wait 5s then click confirm",
+        agreeBtnReady: "Agreed - Proceed to Reservation",
+        weekDays: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+        hintSelectStart: "Please select the start (pickup) date.",
+        hintSelectEnd: "Selected. Please select the return date.",
+        hintRangeSelected: "Selected Period: ",
+        placeholderName: "e.g. John Doe (Applicant)",
+        placeholderActualName: "e.g. Mark Smith",
+        placeholderPhone: "010-0000-0000",
+        placeholderDept: "e.g. BASE Admin / YWAM",
+        placeholderPurpose: "e.g. Ministry venue visit & equipment transport",
+        placeholderPassword: "Password (4+ digits for edit/delete)",
+        truckConfirmMsg: "6. Box Truck Clearance Height: 2.5m+ only. Vehicles under 2.5m cannot enter.\n7. Driver Age Limit: Box Truck must be 25+ years old.",
+        rulesHtml: `
+          <div class="bg-emerald-950/30 p-3 rounded-xl border border-emerald-800/40 text-emerald-200 text-[11px] leading-relaxed">
+            Welcome co-workers in God's mission!<br>
+            YWAM Gadeok's trucks are self-funded for ministry. All usage funds are transparently spent only for vehicle safety and maintenance.
+          </div>
+          <div class="font-bold text-emerald-400 text-xs pt-1 flex items-center gap-1">
+            <i class="fa-solid fa-triangle-exclamation"></i> Essential Guidelines
+          </div>
+          <div class="space-y-2 pl-1">
+            <div class="bg-input/60 p-2.5 rounded-lg border border-gray-800">
+              <span class="font-bold text-white">1. Traffic Regulations:</span> No speeding or red-light violations (Fines paid by driver).
+            </div>
+            <div class="bg-input/60 p-2.5 rounded-lg border border-gray-800">
+              <span class="font-bold text-white">2. Record Mileage:</span> Record dashboard mileage at pickup and return.
+            </div>
+            <div class="bg-input/60 p-2.5 rounded-lg border border-gray-800">
+              <span class="font-bold text-white">3. Fuel & Cleaning:</span> Clean trash & refuel used amount before return.<br>
+              <span class="text-gray-400 text-[11px]">(If un-refueled, transfer fuel fee to KB Bank 701801-04-113534 IWT Korea)</span>
+            </div>
+            <div class="bg-input/60 p-2.5 rounded-lg border border-gray-800">
+              <span class="font-bold text-white">4. Incident Report:</span> Immediately notify admins if damage occurs.<br>
+              <span class="text-emerald-400 text-[11px]">📞 Admins: Taekhwa Hong 010-8753-7223 / Gyubeen Kim 010-9461-9230</span>
+            </div>
+            <div class="bg-input/60 p-2.5 rounded-lg border border-gray-800">
+              <span class="font-bold text-white">5. Punctuality:</span> Strict return time observance for next users.
+            </div>
+            <div class="bg-amber-950/40 p-2.5 rounded-lg border border-amber-700/50 text-amber-200">
+              <span class="font-bold">6. Truck Height Limit:</span> Clearance 2.5m or higher only. Cannot enter under 2.5m.
+            </div>
+            <div class="bg-amber-950/40 p-2.5 rounded-lg border border-amber-700/50 text-amber-200">
+              <span class="font-bold">7. Age Requirement:</span> Box Truck driver must be 25 years or older.
+            </div>
+          </div>
+        `
+      }
+    };
+
+    let currentLang = 'ko';
+
     const DEFAULT_FIREBASE_CONFIG = JSON.stringify({
       apiKey: "AIzaSyCFiOVg_XZWjQ7dTRe0EnfE81eBi0CHbM8",
       authDomain: "gd-base-vehicle-reservation.firebaseapp.com",
@@ -279,6 +423,7 @@ YWAM 가덕의 탑차는 사역을 위해 자비량으로 운영&관리됩니다
     let reservations = [];
     let db = null;
     let editingResTarget = null;
+    let isTimerFinished = false;
 
     let webhookUrl = localStorage.getItem("google_chat_webhook") || DEFAULT_WEBHOOK_URL;
     let firebaseConfigRaw = localStorage.getItem("firebase_config") || DEFAULT_FIREBASE_CONFIG;
@@ -300,6 +445,7 @@ YWAM 가덕의 탑차는 사역을 위해 자비량으로 운영&관리됩니다
     const reservationForm = document.getElementById("reservationForm");
 
     document.addEventListener("DOMContentLoaded", () => {
+      applyLanguage(currentLang);
       startRulesSequence();
       initFirebase();
       renderCalendar();
@@ -327,7 +473,54 @@ YWAM 가덕의 탑차는 사역을 위해 자비량으로 운영&관리됩니다
           actualDriverName.required = false;
         }
       });
+
+      // 언어 토글 버튼 이벤트
+      const toggleLang = () => {
+        currentLang = currentLang === 'ko' ? 'en' : 'ko';
+        applyLanguage(currentLang);
+      };
+      document.getElementById("langToggleModal").addEventListener("click", toggleLang);
+      document.getElementById("langToggleHeader").addEventListener("click", toggleLang);
     });
+
+    function applyLanguage(lang) {
+      const t = i18n[lang];
+      document.querySelectorAll("[data-i18n]").forEach(el => {
+        const key = el.getAttribute("data-i18n");
+        if (t[key]) el.textContent = t[key];
+      });
+
+      document.getElementById("rulesContent").innerHTML = t.rulesHtml;
+      document.getElementById("modalLangLabel").textContent = lang === 'ko' ? 'ENG' : 'KOR';
+      document.getElementById("headerLangLabel").textContent = lang === 'ko' ? 'ENG' : 'KOR';
+
+      document.getElementById("userName").placeholder = t.placeholderName;
+      document.getElementById("actualDriverName").placeholder = t.placeholderActualName;
+      document.getElementById("actualDriverPhone").placeholder = t.placeholderPhone;
+      document.getElementById("userPhone").placeholder = t.placeholderPhone;
+      document.getElementById("userDept").placeholder = t.placeholderDept;
+      document.getElementById("userPurpose").placeholder = t.placeholderPurpose;
+      document.getElementById("userPassword").placeholder = t.placeholderPassword;
+
+      // 요일 헤더 갱신
+      const weekContainer = document.getElementById("calendarWeekDays");
+      weekContainer.innerHTML = t.weekDays.map((w, idx) => `<span class="${idx === 0 ? 'text-red-400' : ''}">${w}</span>`).join('');
+
+      // 동의버튼 텍스트 상태 복원
+      const label = document.getElementById("agreeLabel");
+      const agreeBtn = document.getElementById("agreeRulesBtn");
+      if (isTimerFinished) {
+        label.textContent = t.agreeTextReady;
+        if (document.getElementById("agreeCheckbox").checked) {
+          agreeBtn.querySelector("span").textContent = t.agreeBtnReady;
+        } else {
+          agreeBtn.querySelector("span").textContent = t.agreeBtnWait;
+        }
+      }
+
+      renderCalendar();
+      renderReservationList();
+    }
 
     function startRulesSequence() {
       let timeLeft = 5;
@@ -339,18 +532,18 @@ YWAM 가덕의 탑차는 사역을 위해 자비량으로 운영&관리됩니다
       const timer = setInterval(() => {
         timeLeft--;
         if (timeLeft > 0) {
-          timerBadge.textContent = `${timeLeft}초 대기`;
-          label.textContent = `수칙을 숙지했으며 동의합니다 (${timeLeft}초 뒤 선택 가능)`;
+          timerBadge.textContent = `${timeLeft}s Wait`;
         } else {
           clearInterval(timer);
-          timerBadge.textContent = "체크 가능";
+          isTimerFinished = true;
+          timerBadge.textContent = "OK";
           timerBadge.className = "text-[11px] bg-emerald-900 text-emerald-300 border border-emerald-500 px-2 py-0.5 rounded-full font-bold";
           
           checkbox.disabled = false;
           checkbox.classList.remove("cursor-not-allowed");
           label.classList.remove("cursor-not-allowed", "text-gray-500");
           label.classList.add("text-emerald-300", "cursor-pointer");
-          label.textContent = "수칙을 숙지했으며 동의합니다";
+          label.textContent = i18n[currentLang].agreeTextReady;
         }
       }, 1000);
 
@@ -358,11 +551,11 @@ YWAM 가덕의 탑차는 사역을 위해 자비량으로 운영&관리됩니다
         if (e.target.checked) {
           agreeBtn.disabled = false;
           agreeBtn.className = "w-full accent-green accent-green-hover font-bold py-3.5 rounded-xl text-xs transition-all flex items-center justify-center space-x-2 shadow-lg cursor-pointer";
-          agreeBtn.querySelector("span").textContent = "동의함 및 차량 예약 화면으로 이동";
+          agreeBtn.querySelector("span").textContent = i18n[currentLang].agreeBtnReady;
         } else {
           agreeBtn.disabled = true;
           agreeBtn.className = "w-full bg-gray-800 text-gray-500 font-bold py-3.5 rounded-xl text-xs transition-all flex items-center justify-center space-x-2 cursor-not-allowed border border-gray-700";
-          agreeBtn.querySelector("span").textContent = "동의 후 확인 버튼을 눌러주세요";
+          agreeBtn.querySelector("span").textContent = i18n[currentLang].agreeBtnWait;
         }
       });
 
@@ -380,7 +573,7 @@ YWAM 가덕의 탑차는 사역을 위해 자비량으로 운영&관리됩니다
           firebase.initializeApp(config);
         }
         db = firebase.database();
-        document.getElementById("dbStatusBadge").textContent = "파이어베이스 실시간 공유중";
+        document.getElementById("dbStatusBadge").textContent = "Firebase Live";
         document.getElementById("dbStatusBadge").className = "text-[10px] px-2 py-0.5 rounded-full bg-emerald-900/60 text-emerald-300 border border-emerald-700/50";
 
         db.ref("ywam_reservations").on("value", (snapshot) => {
@@ -445,7 +638,7 @@ YWAM 가덕의 탑차는 사역을 위해 자비량으로 운영&관리됩니다
 
         const startOpt = document.createElement("option");
         startOpt.value = t;
-        startOpt.textContent = isStartDisabled ? `${t} (예약됨)` : t;
+        startOpt.textContent = isStartDisabled ? `${t} (Booked)` : t;
         startOpt.disabled = isStartDisabled;
         startTimeSelect.appendChild(startOpt);
       });
@@ -479,7 +672,7 @@ YWAM 가덕의 탑차는 사역을 위해 자비량으로 운영&관리됩니다
 
         const endOpt = document.createElement("option");
         endOpt.value = t;
-        endOpt.textContent = isEndDisabled ? `${t} (선택불가)` : t;
+        endOpt.textContent = isEndDisabled ? `${t} (N/A)` : t;
         endOpt.disabled = isEndDisabled;
         endTimeSelect.appendChild(endOpt);
       });
@@ -532,12 +725,13 @@ YWAM 가덕의 탑차는 사역을 위해 자비량으로 운영&관리됩니다
         calendarDays.appendChild(dayBtn);
       }
 
+      const t = i18n[currentLang];
       if (!startDateStr) {
-        rangeSelectHint.textContent = "시작일(출발일)을 선택해 주세요.";
+        rangeSelectHint.textContent = t.hintSelectStart;
       } else if (startDateStr && !endDateStr) {
-        rangeSelectHint.textContent = `[${startDateStr}] 선택됨. 반납일(종료일)을 선택해 주세요.`;
+        rangeSelectHint.textContent = `[${startDateStr}] ${t.hintSelectEnd}`;
       } else {
-        rangeSelectHint.textContent = `선택된 기간: ${startDateStr} ~ ${endDateStr}`;
+        rangeSelectHint.textContent = `${t.hintRangeSelected} ${startDateStr} ~ ${endDateStr}`;
       }
 
       updateTimeSelectOptions();
@@ -581,17 +775,17 @@ YWAM 가덕의 탑차는 사역을 위해 자비량으로 운영&관리됩니다
       e.preventDefault();
 
       if (!startDateStr) {
-        alert("예약 시작일을 선택해 주세요.");
+        alert(currentLang === 'ko' ? "예약 시작일을 선택해 주세요." : "Please select a start date.");
         return;
       }
 
       const selectedVehicle = vehicleSelect.value;
 
-      // 🚨 [수정됨] 탑차 선택 시 2차 경고 Confirm 알림 검사 위치 보정
-      if (selectedVehicle.indexOf("탑차") !== -1) {
-        const truckConfirmMsg = "6. 탑차 높이는 2.5m이상만 가능. 2.5m 이하는 들어갈 수 없습니다 (수정요망)\n7. 탑차 운전자 가능 나이 만25세이상 / 카니발 운전자 가능 나이 ??.";
-        if (!confirm(truckConfirmMsg)) {
-          return; // 사용자가 취소를 누르면 예약 신청 중단
+      // 🚨 탑차 선택 시 2차 경고 Confirm 알림 검사
+      if (selectedVehicle.indexOf("탑차") !== -1 || selectedVehicle.indexOf("Truck") !== -1) {
+        const truckMsg = i18n[currentLang].truckConfirmMsg;
+        if (!confirm(truckMsg)) {
+          return; // 사용자가 취소를 누르면 예약 중단
         }
       }
 
@@ -600,7 +794,7 @@ YWAM 가덕의 탑차는 사역을 위해 자비량으로 운영&관리됩니다
       const endTimeVal = endTimeSelect.value;
 
       if (!startTimeVal || !endTimeVal) {
-        alert("선택 가능한 시간이 없습니다. 다른 날짜나 차량을 선택해 주세요.");
+        alert(currentLang === 'ko' ? "선택 가능한 시간이 없습니다." : "No available time slot.");
         return;
       }
 
@@ -608,14 +802,14 @@ YWAM 가덕의 탑차는 사역을 위해 자비량으로 운영&관리됩니다
       const newEndDateTime = parseTimeMs(finalEndDate, endTimeVal);
 
       if (newEndDateTime <= newStartDateTime) {
-        alert("반납 시각은 출발 시각보다 이후여야 합니다.");
+        alert(currentLang === 'ko' ? "반납 시각은 출발 시각보다 이후여야 합니다." : "Return time must be after pickup time.");
         return;
       }
 
       const conflictingRes = checkReservationConflict(selectedVehicle, newStartDateTime, newEndDateTime);
 
       if (conflictingRes) {
-        alert(`❌ 선택하신 시간에 이미 예약된 건이 존재합니다!\n\n• 차량: ${conflictingRes.vehicle}\n• 기존 예약자: ${conflictingRes.userName} (${conflictingRes.dept})\n• 기존 예약시간: ${conflictingRes.startDate} ${conflictingRes.startTime} ~ ${conflictingRes.endDate} ${conflictingRes.endTime}`);
+        alert(`❌ ${currentLang === 'ko' ? '선택하신 시간에 이미 예약된 건이 존재합니다!' : 'Conflict with an existing reservation!'}\n\n• ${conflictingRes.vehicle}\n• ${conflictingRes.userName} (${conflictingRes.dept})\n• ${conflictingRes.startDate} ${conflictingRes.startTime} ~ ${conflictingRes.endDate} ${conflictingRes.endTime}`);
         return;
       }
 
@@ -629,7 +823,7 @@ YWAM 가덕의 탑차는 사역을 위해 자비량으로 운영&관리됩니다
         endDate: finalEndDate,
         endTime: endTimeVal,
         userName: document.getElementById("userName").value,
-        dept: document.getElementById("userDept").value || "소속 미기재",
+        dept: document.getElementById("userDept").value || "N/A",
         phone: document.getElementById("userPhone").value,
         purpose: document.getElementById("userPurpose").value,
         isDiffDriver: isDiffDriver,
@@ -650,7 +844,7 @@ YWAM 가덕의 탑차는 사역을 위해 자비량으로 운영&관리됩니다
             renderReservationList();
           }
         }
-        alert("차량 예약이 성공적으로 수정되었습니다! (알림 미발송)");
+        alert(currentLang === 'ko' ? "차량 예약이 성공적으로 수정되었습니다!" : "Reservation updated successfully!");
         resetEditMode();
       } else {
         const newRes = {
@@ -668,7 +862,7 @@ YWAM 가덕의 탑차는 사역을 위해 자비량으로 운영&관리됩니다
         }
 
         sendGoogleChatWebhook(newRes, "CREATE");
-        alert("차량 예약 신청이 완료되었습니다!");
+        alert(currentLang === 'ko' ? "차량 예약 신청이 완료되었습니다!" : "Vehicle reservation submitted successfully!");
       }
 
       startDateStr = null;
@@ -680,11 +874,11 @@ YWAM 가덕의 탑차는 사역을 위해 자비량으로 운영&관리됩니다
     });
 
     function startEditReservation(resObj) {
-      const inputPwd = prompt(`예약 신청 시 설정하셨던 비밀번호를 입력해 주세요.`);
+      const inputPwd = prompt(currentLang === 'ko' ? "예약 신청 시 설정하셨던 비밀번호를 입력해 주세요." : "Please enter your password.");
       if (inputPwd === null) return;
 
       if (resObj.password && inputPwd !== resObj.password) {
-        alert("❌ 비밀번호가 일치하지 않습니다. 본인만 수정할 수 있습니다.");
+        alert(currentLang === 'ko' ? "❌ 비밀번호가 일치하지 않습니다." : "❌ Incorrect password.");
         return;
       }
 
@@ -719,7 +913,7 @@ YWAM 가덕의 탑차는 사역을 위해 자비량으로 운영&관리됩니다
       endTimeSelect.value = resObj.endTime;
 
       document.getElementById("editBanner").classList.remove("hidden");
-      document.getElementById("submitFormBtn").textContent = "예약 내용 수정 완료하기";
+      document.getElementById("submitFormBtn").textContent = currentLang === 'ko' ? "예약 내용 수정 완료하기" : "Update Reservation";
       document.getElementById("submitFormBtn").className = "w-full bg-blue-600 hover:bg-blue-500 font-bold py-3.5 rounded-xl shadow-lg text-sm mt-2 transition-all text-white";
 
       tabReserve.click();
@@ -728,7 +922,7 @@ YWAM 가덕의 탑차는 사역을 위해 자비량으로 운영&관리됩니다
     function resetEditMode() {
       editingResTarget = null;
       document.getElementById("editBanner").classList.add("hidden");
-      document.getElementById("submitFormBtn").textContent = "차량 예약 신청하기";
+      document.getElementById("submitFormBtn").textContent = i18n[currentLang].btnSubmit;
       document.getElementById("submitFormBtn").className = "w-full accent-green accent-green-hover font-bold py-3.5 rounded-xl shadow-lg text-sm mt-2 transition-all";
       reservationForm.reset();
       document.getElementById("differentDriverCheck").checked = false;
@@ -739,16 +933,16 @@ YWAM 가덕의 탑차는 사역을 위해 자비량으로 운영&관리됩니다
     }
 
     function deleteReservation(resObj) {
-      const inputPwd = prompt(`예약 신청 시 설정하셨던 삭제 비밀번호를 입력해 주세요.`);
+      const inputPwd = prompt(currentLang === 'ko' ? "예약 비밀번호를 입력해 주세요." : "Enter password to cancel reservation.");
       
       if (inputPwd === null) return;
 
       if (resObj.password && inputPwd !== resObj.password) {
-        alert("❌ 비밀번호가 일치하지 않습니다. 본인만 삭제할 수 있습니다.");
+        alert(currentLang === 'ko' ? "❌ 비밀번호가 일치하지 않습니다." : "❌ Password mismatch.");
         return;
       }
 
-      if (confirm(`[${resObj.vehicle}] ${resObj.startDate} ~ ${resObj.endDate} 예약을 정말 취소하시겠습니까?`)) {
+      if (confirm(`[${resObj.vehicle}] ${resObj.startDate} ~ ${resObj.endDate} ${currentLang === 'ko' ? '예약을 정말 취소하시겠습니까?' : 'Cancel this reservation?'}`)) {
         if (db && resObj.fbKey) {
           db.ref("ywam_reservations/" + resObj.fbKey).remove();
         } else {
@@ -758,7 +952,7 @@ YWAM 가덕의 탑차는 사역을 위해 자비량으로 운영&관리됩니다
         }
 
         sendGoogleChatWebhook(resObj, "DELETE");
-        alert("예약이 정상적으로 취소되었습니다.");
+        alert(currentLang === 'ko' ? "예약이 취소되었습니다." : "Reservation cancelled.");
         renderCalendar();
       }
     }
@@ -768,12 +962,12 @@ YWAM 가덕의 탑차는 사역을 위해 자비량으로 운영&관리됩니다
 
       let driverStr = `${resData.userName} (${resData.dept})`;
       if (resData.isDiffDriver && resData.actualDriverName) {
-        driverStr += ` [실운전자: ${resData.actualDriverName} / ${resData.actualDriverPhone}]`;
+        driverStr += ` [Actual Driver: ${resData.actualDriverName} / ${resData.actualDriverPhone}]`;
       }
 
       let messageText = "";
       if (type === "CREATE") {
-        messageText = `🚗 *[가덕 YWAM BASE 차량 예약 알림]*\n• **차량**: ${resData.vehicle}\n• **신청자**: ${driverStr}\n• **일시**: ${resData.startDate} ${resData.startTime} ~ ${resData.endDate} ${resData.endTime}\n• **목적**: ${resData.purpose}\n• **신청자연락처**: ${resData.phone}`;
+        messageText = `🚗 *[가덕 YWAM BASE 차량 예약 알림]*\n• **차량**: ${resData.vehicle}\n• **신청자**: ${driverStr}\n• **일시**: ${resData.startDate} ${resData.startTime} ~ ${resData.endDate} ${resData.endTime}\n• **목적**: ${resData.purpose}\n• **연락처**: ${resData.phone}`;
       } else {
         messageText = `❌ *[가덕 YWAM BASE 차량 예약 취소]*\n• **차량**: ${resData.vehicle}\n• **취소자**: ${resData.userName} (${resData.dept})\n• **일시**: ${resData.startDate} ${resData.startTime} ~ ${resData.endDate} ${resData.endTime}`;
       }
@@ -789,10 +983,10 @@ YWAM 가덕의 탑차는 사역을 위해 자비량으로 운영&관리됩니다
       const container = document.getElementById("reservationListContainer");
       container.innerHTML = "";
 
-      document.getElementById("totalResCount").textContent = `총 ${reservations.length}건`;
+      document.getElementById("totalResCount").textContent = `${currentLang === 'ko' ? '총' : 'Total'} ${reservations.length}${currentLang === 'ko' ? '건' : ''}`;
 
       if (reservations.length === 0) {
-        container.innerHTML = `<p class="text-xs text-gray-500 text-center py-8">등록된 예약이 없습니다.</p>`;
+        container.innerHTML = `<p class="text-xs text-gray-500 text-center py-8">${currentLang === 'ko' ? '등록된 예약이 없습니다.' : 'No active reservations.'}</p>`;
         return;
       }
 
@@ -800,9 +994,9 @@ YWAM 가덕의 탑차는 사역을 위해 자비량으로 운영&관리됩니다
         const card = document.createElement("div");
         card.className = "bg-card p-4 rounded-xl border border-gray-800 space-y-2 text-xs relative";
 
-        let driverInfoHtml = `<p><strong>신청자:</strong> ${res.userName} (${res.dept})</p>`;
+        let driverInfoHtml = `<p><strong>${currentLang === 'ko' ? '신청자' : 'Applicant'}:</strong> ${res.userName} (${res.dept})</p>`;
         if (res.isDiffDriver && res.actualDriverName) {
-          driverInfoHtml += `<p class="text-emerald-400"><strong>실운전자:</strong> ${res.actualDriverName} (${res.actualDriverPhone || '연락처 미기재'})</p>`;
+          driverInfoHtml += `<p class="text-emerald-400"><strong>${currentLang === 'ko' ? '실운전자' : 'Actual Driver'}:</strong> ${res.actualDriverName} (${res.actualDriverPhone || 'N/A'})</p>`;
         }
 
         card.innerHTML = `
@@ -812,16 +1006,16 @@ YWAM 가덕의 탑차는 사역을 위해 자비량으로 운영&관리됩니다
           </div>
           <div class="absolute top-3 right-3 flex space-x-1.5">
             <button class="edit-btn bg-blue-900/40 hover:bg-blue-800 text-blue-300 border border-blue-700/50 px-2 py-1 rounded text-[11px] transition-all">
-              수정
+              ${currentLang === 'ko' ? '수정' : 'Edit'}
             </button>
             <button class="delete-btn bg-red-900/40 hover:bg-red-800 text-red-300 border border-red-700/50 px-2 py-1 rounded text-[11px] transition-all">
-              삭제
+              ${currentLang === 'ko' ? '삭제' : 'Delete'}
             </button>
           </div>
           <div class="text-gray-300 space-y-0.5">
             ${driverInfoHtml}
-            <p><strong>신청자연락처:</strong> ${res.phone}</p>
-            <p><strong>목적:</strong> ${res.purpose}</p>
+            <p><strong>${currentLang === 'ko' ? '연락처' : 'Phone'}:</strong> ${res.phone}</p>
+            <p><strong>${currentLang === 'ko' ? '목적' : 'Purpose'}:</strong> ${res.purpose}</p>
           </div>
         `;
 

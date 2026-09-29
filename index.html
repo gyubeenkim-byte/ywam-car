@@ -24,15 +24,18 @@
 </head>
 <body class="max-w-md mx-auto min-h-screen flex flex-col pb-10 border-x border-gray-800 shadow-2xl">
 
-  <!-- 🚨 초기 접속 시 나타나는 5초 이용 수칙 모달 -->
+  <!-- 🚨 초기 접속 시 나타나는 5초 대기 + 체크박스 동의 모달 -->
   <div id="rulesModal" class="fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 z-50">
     <div class="bg-card w-full max-w-sm rounded-2xl p-5 border border-emerald-500/30 space-y-4 text-left shadow-2xl">
-      <div class="flex items-center space-x-2 text-emerald-400 border-b border-gray-800 pb-3">
-        <i class="fa-solid fa-clipboard-check text-xl"></i>
-        <h3 class="font-bold text-base text-white">가덕 YWAM BASE 차량 이용 수칙</h3>
+      <div class="flex items-center justify-between border-b border-gray-800 pb-3">
+        <div class="flex items-center space-x-2 text-emerald-400">
+          <i class="fa-solid fa-clipboard-check text-xl"></i>
+          <h3 class="font-bold text-base text-white">가덕 YWAM BASE 차량 이용 수칙</h3>
+        </div>
+        <span id="timerBadge" class="text-[11px] bg-emerald-950 text-emerald-400 border border-emerald-700/50 px-2 py-0.5 rounded-full font-bold">5초 대기</span>
       </div>
 
-      <div class="space-y-2.5 text-xs text-gray-300 leading-relaxed max-h-[60vh] overflow-y-auto pr-1">
+      <div class="space-y-2.5 text-xs text-gray-300 leading-relaxed max-h-[50vh] overflow-y-auto pr-1">
         <div class="bg-input/60 p-2.5 rounded-lg border border-gray-800">
           <p class="font-bold text-emerald-400 mb-1">1. 주유 및 차량 상태 확인</p>
           <p>• 반납 시 다음 사용자를 위해 연료는 최소 반 이상 채워주세요.</p>
@@ -57,9 +60,18 @@
         </div>
       </div>
 
-      <button id="agreeRulesBtn" disabled class="w-full bg-gray-700 text-gray-400 cursor-not-allowed font-bold py-3.5 rounded-xl text-xs transition-all flex items-center justify-center space-x-2">
-        <i class="fa-solid fa-clock text-xs"></i>
-        <span id="agreeBtnText">동의하고 시작하기 (5초)</span>
+      <!-- 동의 체크박스 영역 -->
+      <div class="bg-input p-3 rounded-xl border border-gray-700 flex items-center space-x-2.5">
+        <input type="checkbox" id="agreeCheckbox" disabled class="w-4 h-4 text-emerald-500 rounded focus:ring-emerald-500 bg-gray-800 border-gray-600 cursor-not-allowed">
+        <label id="agreeLabel" for="agreeCheckbox" class="text-xs text-gray-500 select-none cursor-not-allowed">
+          수칙을 숙지했으며 동의합니다 (5초 뒤 선택 가능)
+        </label>
+      </div>
+
+      <!-- 최종 확인 및 예약하기 버튼 -->
+      <button id="agreeRulesBtn" disabled class="w-full bg-gray-800 text-gray-500 font-bold py-3.5 rounded-xl text-xs transition-all flex items-center justify-center space-x-2 cursor-not-allowed border border-gray-700">
+        <i class="fa-solid fa-check text-xs"></i>
+        <span>동의 후 확인 버튼을 눌러주세요</span>
       </button>
     </div>
   </div>
@@ -266,7 +278,7 @@
     const reservationForm = document.getElementById("reservationForm");
 
     document.addEventListener("DOMContentLoaded", () => {
-      startRulesTimer();
+      startRulesSequence(); // 5초 대기 -> 체크박스 -> 동의 로직 실행
       initFirebase();
       renderCalendar();
       if (!db) {
@@ -281,24 +293,46 @@
       document.getElementById("cancelEditBtn").addEventListener("click", () => resetEditMode());
     });
 
-    function startRulesTimer() {
+    // ⏱️ 단계별 이용 수칙 동의 제어 함수 (5초 대기 -> 체크박스 클릭 -> 동의 버튼 클릭)
+    function startRulesSequence() {
       let timeLeft = 5;
+      const timerBadge = document.getElementById("timerBadge");
+      const checkbox = document.getElementById("agreeCheckbox");
+      const label = document.getElementById("agreeLabel");
       const agreeBtn = document.getElementById("agreeRulesBtn");
-      const agreeText = document.getElementById("agreeBtnText");
 
       const timer = setInterval(() => {
         timeLeft--;
         if (timeLeft > 0) {
-          agreeText.textContent = `동의하고 시작하기 (${timeLeft}초)`;
+          timerBadge.textContent = `${timeLeft}초 대기`;
+          label.textContent = `수칙을 숙지했으며 동의합니다 (${timeLeft}초 뒤 선택 가능)`;
         } else {
           clearInterval(timer);
-          agreeBtn.disabled = false;
-          agreeBtn.className = "w-full accent-green accent-green-hover font-bold py-3.5 rounded-xl text-xs transition-all flex items-center justify-center space-x-2 shadow-lg cursor-pointer";
-          agreeText.textContent = "동의함 및 차량 예약하기";
+          timerBadge.textContent = "체크 가능";
+          timerBadge.className = "text-[11px] bg-emerald-900 text-emerald-300 border border-emerald-500 px-2 py-0.5 rounded-full font-bold";
+          
+          checkbox.disabled = false;
+          checkbox.classList.remove("cursor-not-allowed");
+          label.classList.remove("cursor-not-allowed", "text-gray-500");
+          label.classList.add("text-emerald-300", "cursor-pointer");
+          label.textContent = "수칙을 숙지했으며 동의합니다";
         }
       }, 1000);
 
+      checkbox.addEventListener("change", (e) => {
+        if (e.target.checked) {
+          agreeBtn.disabled = false;
+          agreeBtn.className = "w-full accent-green accent-green-hover font-bold py-3.5 rounded-xl text-xs transition-all flex items-center justify-center space-x-2 shadow-lg cursor-pointer";
+          agreeBtn.querySelector("span").textContent = "동의함 및 차량 예약 화면으로 이동";
+        } else {
+          agreeBtn.disabled = true;
+          agreeBtn.className = "w-full bg-gray-800 text-gray-500 font-bold py-3.5 rounded-xl text-xs transition-all flex items-center justify-center space-x-2 cursor-not-allowed border border-gray-700";
+          agreeBtn.querySelector("span").textContent = "동의 후 확인 버튼을 눌러주세요";
+        }
+      });
+
       agreeBtn.addEventListener("click", () => {
+        if (!checkbox.checked) return;
         document.getElementById("rulesModal").classList.add("hidden");
       });
     }

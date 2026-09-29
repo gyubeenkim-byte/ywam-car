@@ -50,12 +50,21 @@
   <!-- VIEW 1: Reservation Form -->
   <main id="viewReserve" class="p-4 space-y-5 flex-1">
     
+    <!-- Editing Mode Status Banner -->
+    <div id="editBanner" class="hidden bg-emerald-950/80 border border-emerald-500/50 p-3 rounded-xl flex justify-between items-center text-xs">
+      <div class="flex items-center space-x-2 text-emerald-300">
+        <i class="fa-solid fa-pen-to-square text-sm"></i>
+        <span><strong>예약 수정 모드</strong> 진행 중입니다.</span>
+      </div>
+      <button id="cancelEditBtn" type="button" class="text-gray-400 hover:text-white text-[11px] underline">수정 취소</button>
+    </div>
+
     <!-- Vehicle Selection -->
     <div>
       <label class="block text-xs text-gray-400 mb-1.5 font-semibold">차량 선택</label>
       <select id="vehicleSelect" class="w-full bg-input text-white text-sm rounded-lg p-3 border border-gray-700 focus:outline-none focus:border-emerald-500">
-        <option value="카니발 (승합차)">카니발 (승합차)</option>
-        <option value="트럭 (화물차)">트럭 (화물차)</option>
+        <option value="카니발 (9인승)">카니발 (9인승)</option>
+        <option value="탑차 (1톤)">탑차 (1톤)</option>
       </select>
     </div>
 
@@ -80,7 +89,7 @@
       </p>
     </div>
 
-    <!-- Start / End Time Selection (00:00 ~ 24:00) -->
+    <!-- Start / End Time Selection -->
     <div class="grid grid-cols-2 gap-3 bg-card p-3 rounded-xl border border-gray-800">
       <div>
         <label class="block text-[11px] text-emerald-400 mb-1 font-semibold">출발 시각 (시작일)</label>
@@ -105,8 +114,8 @@
 
       <div class="grid grid-cols-2 gap-2.5">
         <div class="space-y-1">
-          <label class="block text-xs text-gray-400">소속 부서 / 팀</label>
-          <input type="text" id="userDept" placeholder="예: BASE 관리팀" class="w-full bg-input text-white text-sm rounded-lg p-2.5 border border-gray-700 focus:outline-none focus:border-emerald-500">
+          <label class="block text-xs text-gray-400">소속 팀 / 단체 / 교회</label>
+          <input type="text" id="userDept" placeholder="예: BASE 관리팀 / OO교회" class="w-full bg-input text-white text-sm rounded-lg p-2.5 border border-gray-700 focus:outline-none focus:border-emerald-500">
         </div>
         <div class="space-y-1">
           <label class="block text-xs text-gray-400">연락처 <span class="text-emerald-500">*</span></label>
@@ -119,16 +128,16 @@
         <textarea id="userPurpose" required rows="2" placeholder="예: 수련회 장소 답사 및 물품 수거" class="w-full bg-input text-white text-sm rounded-lg p-2.5 border border-gray-700 focus:outline-none focus:border-emerald-500"></textarea>
       </div>
 
-      <!-- 비밀번호 입력란 가시성 강화 -->
+      <!-- 비밀번호 입력란 -->
       <div class="space-y-1 bg-card p-3 rounded-xl border border-gray-700">
         <label class="block text-xs text-emerald-400 font-semibold flex items-center gap-1.5">
-          <i class="fa-solid fa-lock text-xs"></i> 삭제 비밀번호 <span class="text-emerald-500">* (본인 확인용)</span>
+          <i class="fa-solid fa-lock text-xs"></i> 비밀번호 <span class="text-emerald-500">* (수정/삭제용)</span>
         </label>
-        <input type="password" id="userPassword" required placeholder="예약 취소 시 사용할 4자리 이상 비밀번호" class="w-full bg-input text-white text-sm rounded-lg p-2.5 border border-gray-600 focus:outline-none focus:border-emerald-500">
-        <p class="text-[10px] text-gray-400">※ 이 예약건을 취소/삭제할 때 확인 과정에서 사용됩니다.</p>
+        <input type="password" id="userPassword" required placeholder="수정/삭제 시 사용할 4자리 이상 비밀번호" class="w-full bg-input text-white text-sm rounded-lg p-2.5 border border-gray-600 focus:outline-none focus:border-emerald-500">
+        <p class="text-[10px] text-gray-400">※ 예약의 수정 및 취소 시 본인 확인용으로 사용됩니다.</p>
       </div>
 
-      <button type="submit" class="w-full accent-green accent-green-hover font-bold py-3.5 rounded-xl shadow-lg text-sm mt-2 transition-all">
+      <button type="submit" id="submitFormBtn" class="w-full accent-green accent-green-hover font-bold py-3.5 rounded-xl shadow-lg text-sm mt-2 transition-all">
         차량 예약 신청하기
       </button>
     </form>
@@ -188,18 +197,19 @@
       measurementId: "G-ZQWJQQRBK1"
     });
 
-    const DEFAULT_WEBHOOK_URL = "https://chat.googleapis.com/v1/spaces/AAQAxpJfkLw/messages?key=AIzaSyDdI0hCZtE6vySjMm-WEfRq3CPzqKqqsHI&token=8VxRP6gPwmGQycEW8ig1Th-Pc6T6tNG3fqipRkuWp-A"; 
+    // 신규 변경된 구글챗 Webhook URL 기본값 지정
+    const DEFAULT_WEBHOOK_URL = "https://chat.googleapis.com/v1/spaces/AAQA64kMSd4/messages?key=AIzaSyDdI0hCZtE6vySjMm-WEfRq3CPzqKqqsHI&token=adoIufGJ0U5PNGANbGz2TV860DZLYzOSudiL_TBKsAk"; 
 
     let currentDate = new Date();
     let startDateStr = null;
     let endDateStr = null;
     let reservations = [];
     let db = null;
+    let editingResTarget = null; // 수정 중인 예약 데이터 저장 변수
 
     let webhookUrl = localStorage.getItem("google_chat_webhook") || DEFAULT_WEBHOOK_URL;
     let firebaseConfigRaw = localStorage.getItem("firebase_config") || DEFAULT_FIREBASE_CONFIG;
 
-    // 00:00 ~ 24:00 (30분 단위)
     const timeSlots = [];
     for (let h = 0; h < 24; h++) {
       const hourStr = h < 10 ? `0${h}` : `${h}`;
@@ -228,6 +238,7 @@
       vehicleSelect.addEventListener("change", () => updateTimeSelectOptions());
       startTimeSelect.addEventListener("change", () => updateTimeSelectOptions());
       endTimeSelect.addEventListener("change", () => updateTimeSelectOptions());
+      document.getElementById("cancelEditBtn").addEventListener("click", () => resetEditMode());
     });
 
     function initFirebase() {
@@ -279,11 +290,19 @@
       startTimeSelect.innerHTML = "";
       endTimeSelect.innerHTML = "";
 
-      const activeReservations = reservations.filter(r => r.vehicle === selectedVehicle);
+      // 수정 중일 때는 자기 자신의 기존 예약 시간대는 중복 판단에서 제외
+      const activeReservations = reservations.filter(r => {
+        if (r.vehicle !== selectedVehicle) return false;
+        if (editingResTarget) {
+          if (db && r.fbKey && r.fbKey === editingResTarget.fbKey) return false;
+          if (!db && r.id === editingResTarget.id) return false;
+        }
+        return true;
+      });
 
-      // 1. 출발 시각 옵션 생성 (00:00 ~ 23:30, 24:00 제외)
+      // 1. 출발 시각 옵션 생성 (00:00 ~ 23:30)
       timeSlots.forEach(t => {
-        if (t === "24:00") return; // 출발 시각에는 24:00 제외
+        if (t === "24:00") return;
 
         let isStartDisabled = false;
         if (effectiveStartDate) {
@@ -302,7 +321,6 @@
         startTimeSelect.appendChild(startOpt);
       });
 
-      // 출발 시각 유효값 세팅
       if (currentStartVal && startTimeSelect.querySelector(`option[value="${currentStartVal}"]:not([disabled])`)) {
         startTimeSelect.value = currentStartVal;
       } else {
@@ -312,9 +330,9 @@
 
       const selectedStartMs = parseTimeMs(effectiveStartDate, startTimeSelect.value);
 
-      // 2. 반납 시각 옵션 생성 (00:30 ~ 24:00, 00:00 제외)
+      // 2. 반납 시각 옵션 생성 (00:30 ~ 24:00)
       timeSlots.forEach(t => {
-        if (t === "00:00") return; // 반납 시각에는 00:00 제외
+        if (t === "00:00") return;
 
         let isEndDisabled = false;
         if (effectiveEndDate) {
@@ -338,7 +356,6 @@
         endTimeSelect.appendChild(endOpt);
       });
 
-      // 반납 시각 유효값 세팅
       if (currentEndVal && endTimeSelect.querySelector(`option[value="${currentEndVal}"]:not([disabled])`)) {
         endTimeSelect.value = currentEndVal;
       } else {
@@ -416,6 +433,11 @@
     function checkReservationConflict(newVehicle, newStartMs, newEndMs) {
       for (const res of reservations) {
         if (res.vehicle === newVehicle) {
+          if (editingResTarget) {
+            if (db && res.fbKey && res.fbKey === editingResTarget.fbKey) continue;
+            if (!db && res.id === editingResTarget.id) continue;
+          }
+
           const resStartMs = parseTimeMs(res.startDate, res.startTime);
           const resEndMs = parseTimeMs(res.endDate, res.endTime);
 
@@ -462,8 +484,7 @@
 
       const passwordVal = document.getElementById("userPassword").value;
 
-      const newRes = {
-        id: Date.now(),
+      const updatedResData = {
         vehicle: selectedVehicle,
         startDate: startDateStr,
         startTime: startTimeVal,
@@ -474,25 +495,97 @@
         phone: document.getElementById("userPhone").value,
         purpose: document.getElementById("userPurpose").value,
         password: passwordVal,
-        createdAt: new Date().toISOString()
+        updatedAt: new Date().toISOString()
       };
 
-      if (db) {
-        db.ref("ywam_reservations").push(newRes);
+      if (editingResTarget) {
+        // [수정 모드] -> 알림 전송 없이 데이터만 업데이트
+        if (db && editingResTarget.fbKey) {
+          db.ref("ywam_reservations/" + editingResTarget.fbKey).update(updatedResData);
+        } else {
+          const idx = reservations.findIndex(r => r.id === editingResTarget.id);
+          if (idx !== -1) {
+            reservations[idx] = { ...reservations[idx], ...updatedResData };
+            localStorage.setItem("ywam_car_reservations_multi", JSON.stringify(reservations));
+            renderReservationList();
+          }
+        }
+        alert("차량 예약이 성공적으로 수정되었습니다! (알림 미발송)");
+        resetEditMode();
       } else {
-        reservations.push(newRes);
-        localStorage.setItem("ywam_car_reservations_multi", JSON.stringify(reservations));
-        renderReservationList();
+        // [신규 예약 모드] -> 신규 등록 및 구글 챗 알림 전송
+        const newRes = {
+          id: Date.now(),
+          ...updatedResData,
+          createdAt: new Date().toISOString()
+        };
+
+        if (db) {
+          db.ref("ywam_reservations").push(newRes);
+        } else {
+          reservations.push(newRes);
+          localStorage.setItem("ywam_car_reservations_multi", JSON.stringify(reservations));
+          renderReservationList();
+        }
+
+        sendGoogleChatWebhook(newRes, "CREATE");
+        alert("차량 예약 신청이 완료되었습니다!");
       }
 
-      sendGoogleChatWebhook(newRes, "CREATE");
-
-      alert("차량 예약 신청이 완료되었습니다!");
       startDateStr = null;
       endDateStr = null;
       reservationForm.reset();
       renderCalendar();
     });
+
+    // 예약 수정 모드 진입 함수
+    function startEditReservation(resObj) {
+      const inputPwd = prompt(`예약 신청 시 설정하셨던 비밀번호를 입력해 주세요.`);
+      if (inputPwd === null) return;
+
+      if (resObj.password && inputPwd !== resObj.password) {
+        alert("❌ 비밀번호가 일치하지 않습니다. 본인만 수정할 수 있습니다.");
+        return;
+      }
+
+      editingResTarget = resObj;
+
+      // 폼 데이터 채우기
+      vehicleSelect.value = resObj.vehicle;
+      document.getElementById("userName").value = resObj.userName;
+      document.getElementById("userDept").value = resObj.dept;
+      document.getElementById("userPhone").value = resObj.phone;
+      document.getElementById("userPurpose").value = resObj.purpose;
+      document.getElementById("userPassword").value = resObj.password;
+
+      startDateStr = resObj.startDate;
+      endDateStr = resObj.endDate;
+
+      // 달력 및 시간 초기화
+      renderCalendar();
+      startTimeSelect.value = resObj.startTime;
+      updateTimeSelectOptions();
+      endTimeSelect.value = resObj.endTime;
+
+      // UI 수정 모드 변경
+      document.getElementById("editBanner").classList.remove("hidden");
+      document.getElementById("submitFormBtn").textContent = "예약 내용 수정 완료하기";
+      document.getElementById("submitFormBtn").className = "w-full bg-blue-600 hover:bg-blue-500 font-bold py-3.5 rounded-xl shadow-lg text-sm mt-2 transition-all text-white";
+
+      // 탭 전환 (예약하기 탭으로 이동)
+      tabReserve.click();
+    }
+
+    function resetEditMode() {
+      editingResTarget = null;
+      document.getElementById("editBanner").classList.add("hidden");
+      document.getElementById("submitFormBtn").textContent = "차량 예약 신청하기";
+      document.getElementById("submitFormBtn").className = "w-full accent-green accent-green-hover font-bold py-3.5 rounded-xl shadow-lg text-sm mt-2 transition-all";
+      reservationForm.reset();
+      startDateStr = null;
+      endDateStr = null;
+      renderCalendar();
+    }
 
     function deleteReservation(resObj) {
       const inputPwd = prompt(`예약 신청 시 설정하셨던 삭제 비밀번호를 입력해 주세요.`);
@@ -552,13 +645,18 @@
         card.className = "bg-card p-4 rounded-xl border border-gray-800 space-y-2 text-xs relative";
 
         card.innerHTML = `
-          <div class="flex justify-between items-center border-b border-gray-800 pb-2 pr-12">
+          <div class="flex justify-between items-center border-b border-gray-800 pb-2 pr-24">
             <span class="font-bold text-emerald-400 text-sm">${res.vehicle}</span>
             <span class="text-gray-400 text-[11px]">${res.startDate} (${res.startTime}) ~ ${res.endDate} (${res.endTime})</span>
           </div>
-          <button class="delete-btn absolute top-3.5 right-3 bg-red-900/40 hover:bg-red-800 text-red-300 border border-red-700/50 px-2 py-1 rounded text-[11px] transition-all">
-            삭제
-          </button>
+          <div class="absolute top-3 right-3 flex space-x-1.5">
+            <button class="edit-btn bg-blue-900/40 hover:bg-blue-800 text-blue-300 border border-blue-700/50 px-2 py-1 rounded text-[11px] transition-all">
+              수정
+            </button>
+            <button class="delete-btn bg-red-900/40 hover:bg-red-800 text-red-300 border border-red-700/50 px-2 py-1 rounded text-[11px] transition-all">
+              삭제
+            </button>
+          </div>
           <div class="text-gray-300 space-y-0.5">
             <p><strong>신청자:</strong> ${res.userName} (${res.dept})</p>
             <p><strong>연락처:</strong> ${res.phone}</p>
@@ -566,6 +664,7 @@
           </div>
         `;
 
+        card.querySelector(".edit-btn").addEventListener("click", () => startEditReservation(res));
         card.querySelector(".delete-btn").addEventListener("click", () => deleteReservation(res));
         container.appendChild(card);
       });

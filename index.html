@@ -27,6 +27,7 @@
   <style>
     .range-selected { background-color: rgba(16, 185, 129, 0.2); color: #34d399; }
     .range-start-end { background-color: #10b981 !important; color: #ffffff !important; font-weight: bold; }
+    .timeline-grid { display: grid; grid-template-columns: 50px repeat(7, 1fr); }
   </style>
 </head>
 <body class="bg-bgDark text-gray-100 min-h-screen pb-12 font-sans antialiased">
@@ -43,9 +44,7 @@
           🌐 <span id="modalLangLabel">ENG</span>
         </button>
       </div>
-      <div id="rulesContent" class="p-4 overflow-y-auto space-y-3 text-xs">
-        <!-- JS에서 동적 생성 -->
-      </div>
+      <div id="rulesContent" class="p-4 overflow-y-auto space-y-3 text-xs"></div>
       <div class="p-4 border-t border-gray-700 bg-gray-900/50 flex flex-col space-y-3">
         <label id="agreeLabel" class="flex items-center space-x-2 text-xs text-gray-500 cursor-not-allowed select-none">
           <input type="checkbox" id="agreeCheckbox" disabled class="rounded border-gray-600 text-emerald-500 focus:ring-emerald-500 cursor-not-allowed">
@@ -83,7 +82,7 @@
     <!-- 탭 내비게이션 -->
     <div class="flex border-b border-gray-800 text-xs font-semibold">
       <button id="tabReserve" class="flex-1 py-3 text-center border-b-2 border-emerald-500 text-emerald-400 font-bold" data-i18n="tabReserve">예약하기</button>
-      <button id="tabList" class="flex-1 py-3 text-center text-gray-400 hover:text-gray-200" data-i18n="tabList">예약 현황</button>
+      <button id="tabList" class="flex-1 py-3 text-center text-gray-400 hover:text-gray-200" data-i18n="tabList">주간 타임라인 현황</button>
     </div>
 
     <!-- 1. 예약 입력 화면 -->
@@ -197,13 +196,32 @@
       </div>
     </div>
 
-    <!-- 2. 예약 목록 화면 -->
+    <!-- 2. 예약 현황 (구글 캘린더 스타일 주간 타임라인) -->
     <div id="viewList" class="hidden space-y-3">
-      <div class="flex justify-between items-center px-1">
-        <h3 class="font-bold text-xs text-gray-300" data-i18n="listTitle">실시간 전체 예약 현황</h3>
-        <span id="totalResCount" class="text-[11px] text-emerald-400 font-semibold"></span>
+      <div class="bg-card p-3 rounded-xl border border-gray-800 space-y-2">
+        <div class="flex justify-between items-center text-xs">
+          <button id="prevWeekBtn" class="px-2 py-1 bg-input hover:bg-gray-700 rounded border border-gray-700 text-gray-300"><i class="fa-solid fa-chevron-left mr-1"></i> 이전주</button>
+          <span id="currentWeekRange" class="font-bold text-emerald-400 text-xs"></span>
+          <button id="nextWeekBtn" class="px-2 py-1 bg-input hover:bg-gray-700 rounded border border-gray-700 text-gray-300">다음주 <i class="fa-solid fa-chevron-right ml-1"></i></button>
+        </div>
+        <div class="flex gap-2 text-xs pt-1">
+          <button id="filterAll" class="flex-1 py-1.5 rounded-lg border border-emerald-500 bg-emerald-950/50 text-emerald-300 font-bold text-center">전체 보기</button>
+          <button id="filterCarnival" class="flex-1 py-1.5 rounded-lg border border-gray-700 bg-input/40 text-gray-400 font-medium text-center hover:bg-gray-800">카니발</button>
+          <button id="filterTruck" class="flex-1 py-1.5 rounded-lg border border-gray-700 bg-input/40 text-gray-400 font-medium text-center hover:bg-gray-800">탑차</button>
+        </div>
       </div>
-      <div id="reservationListContainer" class="space-y-2.5"></div>
+
+      <div class="bg-card rounded-xl border border-gray-800 overflow-x-auto">
+        <div class="min-w-[500px]">
+          <div id="timelineHeader" class="timeline-grid border-b border-gray-800 bg-gray-900/60 text-center text-[11px] font-semibold text-gray-300 py-2"></div>
+          <div id="timelineBody" class="divide-y divide-gray-800/50 text-[10px]"></div>
+        </div>
+      </div>
+
+      <div class="pt-2">
+        <h4 class="font-bold text-xs text-gray-300 mb-2 px-1">상세 예약 내역</h4>
+        <div id="reservationListContainer" class="space-y-2"></div>
+      </div>
     </div>
   </main>
 
@@ -211,7 +229,7 @@
   <div id="settingsModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
     <div class="bg-card w-full max-w-md rounded-2xl border border-gray-700 p-4 space-y-3 text-xs">
       <div class="flex justify-between items-center border-b border-gray-700 pb-2">
-        <h3 class="font-bold text-emerald-400">시스템 설정 (Google Chat / Firebase)</h3>
+        <h3 class="font-bold text-emerald-400">시스템 설정</h3>
         <button id="closeSettingsBtn" class="text-gray-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
       </div>
       <div>
@@ -227,6 +245,7 @@
   </div>
 
   <script>
+    // 새롭게 제공해주신 구글 앱스크립트 배포 URL 반영
     const GOOGLE_SHEET_WEB_APP_URL = "https://script.google.com/a/macros/ywamck.org/s/AKfycbwujyOP2cp0ucQql3Ya8fcV41-n0t1kDC7AX6xzm302D3Tc5s-mt_cTe75VwOMJZnxwnQ/exec";
 
     const i18n = {
@@ -235,7 +254,7 @@
         headerTitle: "가덕 YWAM BASE",
         headerSub: "실시간 차량 예약 시스템",
         tabReserve: "예약하기",
-        tabList: "예약 현황",
+        tabList: "주간 타임라인 현황",
         editTitle: "예약 수정 모드",
         cancelEdit: "수정 취소",
         labelVehicle: "차량 선택",
@@ -252,7 +271,6 @@
         btnSubmit: "차량 예약 신청하기",
         donationTitle: "차량 유지 및 운영 후원 계좌 안내",
         donationSub: "※ 보내주시는 후원금은 오직 차량 정비 및 안전 운행을 위해 사용됩니다.",
-        listTitle: "실시간 전체 예약 현황",
         agreeTextWait: "수칙을 숙지했으며 동의합니다 (5초 뒤 선택 가능)",
         agreeTextReady: "수칙을 숙지했으며 동의합니다",
         agreeBtnWait: "동의 후 확인 버튼을 눌러주세요",
@@ -307,7 +325,7 @@
         headerTitle: "Gadeok YWAM BASE",
         headerSub: "Real-time Vehicle Reservation",
         tabReserve: "Reservation",
-        tabList: "Status List",
+        tabList: "Weekly Timeline View",
         editTitle: "Edit Reservation Mode",
         cancelEdit: "Cancel Edit",
         labelVehicle: "Select Vehicle",
@@ -324,7 +342,6 @@
         btnSubmit: "Submit Reservation Request",
         donationTitle: "Vehicle Maintenance Donation Account",
         donationSub: "※ Your support funds are used exclusively for vehicle safety and maintenance.",
-        listTitle: "Live Reservation Status",
         agreeTextWait: "I have read & agree to the rules (Wait 5s)",
         agreeTextReady: "I have read & agree to all rules",
         agreeBtnWait: "Please wait 5s then click confirm",
@@ -392,12 +409,14 @@
     const DEFAULT_WEBHOOK_URL = "https://chat.googleapis.com/v1/spaces/AAQA64kMSd4/messages?key=AIzaSyDdI0hCZtE6vySjMm-WEfRq3CPzqKqqsHI&token=adoIufGJ0U5PNGANbGz2TV860DZLYzOSudiL_TBKsAk";
 
     let currentDate = new Date();
+    let weekStartDate = new Date();
     let startDateStr = null;
     let endDateStr = null;
     let reservations = [];
     let db = null;
     let editingResTarget = null;
     let isTimerFinished = false;
+    let timelineVehicleFilter = 'ALL';
 
     let webhookUrl = DEFAULT_WEBHOOK_URL;
     localStorage.setItem("google_chat_webhook", DEFAULT_WEBHOOK_URL);
@@ -424,6 +443,9 @@
     const reservationForm = document.getElementById("reservationForm");
 
     document.addEventListener("DOMContentLoaded", () => {
+      const day = weekStartDate.getDay();
+      weekStartDate.setDate(weekStartDate.getDate() - day);
+
       applyLanguage(currentLang);
       startRulesSequence();
       initFirebase();
@@ -437,7 +459,6 @@
       btnCarnival.addEventListener("click", () => selectVehicle("카니발 (9인승)"));
       btnTruck.addEventListener("click", () => selectVehicle("탑차 (1톤)"));
 
-      // 시간 변경 이벤트 연결 오류 수정
       startTimeSelect.addEventListener("change", () => updateTimeSelectOptions());
       endTimeSelect.addEventListener("change", () => updateTimeSelectOptions());
       document.getElementById("cancelEditBtn").addEventListener("click", () => resetEditMode());
@@ -453,6 +474,19 @@
         currentDate.setMonth(currentDate.getMonth() + 1);
         renderCalendar();
       });
+
+      document.getElementById("prevWeekBtn").addEventListener("click", () => {
+        weekStartDate.setDate(weekStartDate.getDate() - 7);
+        renderTimelineView();
+      });
+      document.getElementById("nextWeekBtn").addEventListener("click", () => {
+        weekStartDate.setDate(weekStartDate.getDate() + 7);
+        renderTimelineView();
+      });
+
+      document.getElementById("filterAll").addEventListener("click", () => setTimelineFilter('ALL'));
+      document.getElementById("filterCarnival").addEventListener("click", () => setTimelineFilter('카니발 (9인승)'));
+      document.getElementById("filterTruck").addEventListener("click", () => setTimelineFilter('탑차 (1톤)'));
 
       document.getElementById("openSettingsBtn").addEventListener("click", () => {
         document.getElementById("settingsModal").classList.remove("hidden");
@@ -485,6 +519,22 @@
       document.getElementById("langToggleModal").addEventListener("click", toggleLang);
       document.getElementById("langToggleHeader").addEventListener("click", toggleLang);
     });
+
+    function setTimelineFilter(type) {
+      timelineVehicleFilter = type;
+      const btnAll = document.getElementById("filterAll");
+      const btnCarnival = document.getElementById("filterCarnival");
+      const btnTruck = document.getElementById("filterTruck");
+
+      const activeClass = "flex-1 py-1.5 rounded-lg border border-emerald-500 bg-emerald-950/50 text-emerald-300 font-bold text-center";
+      const inactiveClass = "flex-1 py-1.5 rounded-lg border border-gray-700 bg-input/40 text-gray-400 font-medium text-center hover:bg-gray-800";
+
+      btnAll.className = type === 'ALL' ? activeClass : inactiveClass;
+      btnCarnival.className = type === '카니발 (9인승)' ? activeClass : inactiveClass;
+      btnTruck.className = type === '탑차 (1톤)' ? activeClass : inactiveClass;
+
+      renderTimelineView();
+    }
 
     function selectVehicle(vehicleName) {
       vehicleSelect.value = vehicleName;
@@ -523,25 +573,8 @@
         weekContainer.innerHTML = t.weekDays.map((w, idx) => `<span class="${idx === 0 ? 'text-red-400' : ''}">${w}</span>`).join('');
       }
 
-      const textSpan = document.getElementById("agreeTextSpan");
-      const agreeBtn = document.getElementById("agreeRulesBtn");
-      if (isTimerFinished) {
-        textSpan.textContent = t.agreeTextReady;
-        if (document.getElementById("agreeCheckbox").checked) {
-          agreeBtn.querySelector("span").textContent = t.agreeBtnReady;
-        } else {
-          agreeBtn.querySelector("span").textContent = t.agreeBtnWait;
-        }
-      }
-
-      if (editingResTarget) {
-        document.getElementById("submitFormBtn").textContent = lang === 'ko' ? "예약 수정 완료하기" : "Complete Reservation Edit";
-      } else {
-        document.getElementById("submitFormBtn").textContent = t.btnSubmit;
-      }
-
       renderCalendar();
-      renderReservationList();
+      renderTimelineView();
     }
 
     function startRulesSequence() {
@@ -604,7 +637,7 @@
           reservations = data ? Object.keys(data).map(key => ({ ...data[key], fbKey: key })) : [];
           renderCalendar();
           updateTimeSelectOptions();
-          renderReservationList();
+          renderTimelineView();
         });
       } catch (err) {
         console.error("Firebase Config Error:", err);
@@ -615,7 +648,7 @@
       reservations = JSON.parse(localStorage.getItem("ywam_car_reservations_multi") || "[]");
       renderCalendar();
       updateTimeSelectOptions();
-      renderReservationList();
+      renderTimelineView();
     }
 
     function switchTab(tab) {
@@ -634,6 +667,7 @@
         viewList.classList.remove("hidden");
         tabList.className = "flex-1 py-3 text-center border-b-2 border-emerald-500 text-emerald-400 font-bold";
         tabReserve.className = "flex-1 py-3 text-center text-gray-400 hover:text-gray-200";
+        renderTimelineView();
       }
     }
 
@@ -750,7 +784,6 @@
       const prevStartVal = startTimeSelect.value;
       const prevEndVal = endTimeSelect.value;
 
-      // 1. 출발 시각 옵션 생성
       const startOpts = timeSlots.slice(0, -1).map(t => {
         const slotStartMs = parseTimeMs(curStart, t);
         const nextIdx = timeSlots.indexOf(t) + 1;
@@ -766,7 +799,6 @@
       });
       startTimeSelect.innerHTML = startOpts.join('');
 
-      // 유효한 출발 시각 설정
       if (Array.from(startTimeSelect.options).some(o => o.value === prevStartVal && !o.disabled)) {
         startTimeSelect.value = prevStartVal;
       } else {
@@ -776,7 +808,6 @@
 
       const selectedStartIdx = timeSlots.indexOf(startTimeSelect.value);
 
-      // 2. 반납 시각 옵션 생성
       const endOpts = timeSlots.slice(1).map(t => {
         const tIdx = timeSlots.indexOf(t);
 
@@ -800,13 +831,88 @@
       });
       endTimeSelect.innerHTML = endOpts.join('');
 
-      // 유효한 반납 시각 설정
       if (Array.from(endTimeSelect.options).some(o => o.value === prevEndVal && !o.disabled)) {
         endTimeSelect.value = prevEndVal;
       } else {
         const firstAvailableEnd = Array.from(endTimeSelect.options).find(o => !o.disabled);
         if (firstAvailableEnd) endTimeSelect.value = firstAvailableEnd.value;
       }
+    }
+
+    function renderTimelineView() {
+      const headerEl = document.getElementById("timelineHeader");
+      const bodyEl = document.getElementById("timelineBody");
+      const weekRangeEl = document.getElementById("currentWeekRange");
+
+      const days = [];
+      const weekDaysShort = i18n[currentLang].weekDays;
+
+      for (let i = 0; i < 7; i++) {
+        const d = new Date(weekStartDate);
+        d.setDate(weekStartDate.getDate() + i);
+        days.push(d);
+      }
+
+      const formatDate = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      const formatShort = (d) => `${d.getMonth() + 1}/${d.getDate()}`;
+
+      weekRangeEl.textContent = `${formatDate(days[0])} ~ ${formatDate(days[6])}`;
+
+      headerEl.innerHTML = `<div>시간</div>` + days.map((d, idx) => `
+        <div class="${idx === 0 ? 'text-rose-400' : ''}">
+          <div>${weekDaysShort[idx]}</div>
+          <div class="text-[10px] text-gray-400 font-normal">${formatShort(d)}</div>
+        </div>
+      `).join('');
+
+      const hours = [];
+      for (let h = 6; h <= 23; h++) {
+        hours.push(h < 10 ? `0${h}:00` : `${h}:00`);
+      }
+
+      const filteredRes = reservations.filter(r => timelineVehicleFilter === 'ALL' || r.vehicle === timelineVehicleFilter);
+
+      bodyEl.innerHTML = hours.map(hStr => {
+        const hourNum = parseInt(hStr.split(':')[0], 10);
+
+        const dayCols = days.map(d => {
+          const dateStr = formatDate(d);
+
+          const activeInSlot = filteredRes.filter(r => {
+            if (dateStr < r.startDate || dateStr > r.endDate) return false;
+            const rStartH = parseInt(r.startTime.split(':')[0], 10);
+            const rEndH = parseInt(r.endTime.split(':')[0], 10);
+            return hourNum >= rStartH && hourNum < rEndH;
+          });
+
+          if (activeInSlot.length > 0) {
+            return `
+              <div class="p-1 min-h-[36px] bg-emerald-950/40 border border-emerald-800/50 rounded flex flex-col justify-center">
+                ${activeInSlot.map(res => {
+                  const isCarnival = res.vehicle.includes("카니발");
+                  const badgeBg = isCarnival ? "bg-emerald-600" : "bg-amber-600";
+                  return `
+                    <div class="${badgeBg} text-white px-1 py-0.5 rounded text-[9px] font-bold truncate mb-0.5" title="${res.userName} (${res.startTime}~${res.endTime})">
+                      ${res.userName} (${res.startTime.slice(0,2)}~${res.endTime.slice(0,2)}h)
+                    </div>
+                  `;
+                }).join('')}
+              </div>
+            `;
+          }
+
+          return `<div class="min-h-[36px] border-r border-gray-800/30"></div>`;
+        }).join('');
+
+        return `
+          <div class="timeline-grid items-center">
+            <div class="p-1 text-center font-mono text-gray-500 border-r border-gray-800">${hStr}</div>
+            ${dayCols}
+          </div>
+        `;
+      }).join('');
+
+      renderReservationList();
     }
 
     function checkOverlap(vehicle, startMs, endMs, excludeId = null) {
@@ -894,7 +1000,7 @@
         }
         localStorage.setItem("ywam_car_reservations_multi", JSON.stringify(reservations));
         renderCalendar();
-        renderReservationList();
+        renderTimelineView();
       }
 
       if (!isEditMode) {
@@ -921,10 +1027,9 @@
 
     function renderReservationList() {
       const container = document.getElementById("reservationListContainer");
-      document.getElementById("totalResCount").textContent = currentLang === 'ko' ? `총 ${reservations.length}건` : `Total ${reservations.length}`;
 
       if (reservations.length === 0) {
-        container.innerHTML = `<div class="text-center py-8 text-gray-500 text-xs">${currentLang === 'ko' ? '등록된 예약 내역이 없습니다.' : 'No reservations found.'}</div>`;
+        container.innerHTML = `<div class="text-center py-6 text-gray-500 text-xs">${currentLang === 'ko' ? '등록된 예약 내역이 없습니다.' : 'No reservations found.'}</div>`;
         return;
       }
 
@@ -932,21 +1037,21 @@
 
       container.innerHTML = sorted.map(r => {
         return `
-          <div class="bg-card p-3.5 rounded-xl border border-gray-800 space-y-2 text-xs">
+          <div class="bg-card p-3 rounded-xl border border-gray-800 space-y-2 text-xs">
             <div class="flex justify-between items-start">
               <div>
                 <span class="inline-block px-2 py-0.5 bg-emerald-950 text-emerald-400 border border-emerald-800/60 rounded text-[10px] font-bold mb-1">
                   ${r.vehicle}
                 </span>
-                <h4 class="font-bold text-white text-sm">${r.userName} ${r.userDept ? `<span class="text-gray-400 text-xs">(${r.userDept})</span>` : ''}</h4>
+                <h4 class="font-bold text-white text-xs">${r.userName} ${r.userDept ? `<span class="text-gray-400 text-[11px]">(${r.userDept})</span>` : ''}</h4>
               </div>
               <div class="space-x-1">
-                <button onclick="editReservation('${r.id}')" class="text-xs bg-gray-800 hover:bg-gray-700 text-gray-300 border border-gray-700 px-2 py-1 rounded">${currentLang === 'ko' ? '수정' : 'Edit'}</button>
-                <button onclick="deleteReservation('${r.id}')" class="text-xs bg-red-950/60 hover:bg-red-900/80 text-red-300 border border-red-800/50 px-2 py-1 rounded">${currentLang === 'ko' ? '삭제' : 'Delete'}</button>
+                <button onclick="editReservation('${r.id}')" class="text-[11px] bg-gray-800 hover:bg-gray-700 text-gray-300 border border-gray-700 px-2 py-0.5 rounded">${currentLang === 'ko' ? '수정' : 'Edit'}</button>
+                <button onclick="deleteReservation('${r.id}')" class="text-[11px] bg-red-950/60 hover:bg-red-900/80 text-red-300 border border-red-800/50 px-2 py-0.5 rounded">${currentLang === 'ko' ? '삭제' : 'Delete'}</button>
               </div>
             </div>
             
-            <div class="text-gray-300 space-y-0.5 bg-input/40 p-2.5 rounded-lg border border-gray-800/80 text-[11px]">
+            <div class="text-gray-300 space-y-0.5 bg-input/40 p-2 rounded-lg border border-gray-800/80 text-[11px]">
               <div><i class="fa-regular fa-calendar-check mr-1 text-emerald-400"></i> ${r.startDate} ${r.startTime} ~ ${r.endDate} ${r.endTime}</div>
               <div><i class="fa-solid fa-phone mr-1 text-gray-400"></i> ${r.userPhone}</div>
               ${r.hasDiffDriver ? `<div class="text-amber-300"><i class="fa-solid fa-id-card mr-1"></i> ${currentLang === 'ko' ? '실제운전자' : 'Actual Driver'}: ${r.actualDriverName} (${r.actualDriverPhone})</div>` : ''}
@@ -1015,7 +1120,7 @@
         localStorage.setItem("ywam_car_reservations_multi", JSON.stringify(reservations));
         renderCalendar();
         updateTimeSelectOptions();
-        renderReservationList();
+        renderTimelineView();
       }
 
       alert(currentLang === 'ko' ? "예약이 삭제되었습니다." : "Reservation deleted successfully.");

@@ -227,10 +227,8 @@
   </div>
 
   <script>
-    // 구글 스프레드시트 앱스크립트 웹앱 URL
     const GOOGLE_SHEET_WEB_APP_URL = "https://script.google.com/a/macros/ywamck.org/s/AKfycbwujyOP2cp0ucQql3Ya8fcV41-n0t1kDC7AX6xzm302D3Tc5s-mt_cTe75VwOMJZnxwnQ/exec";
 
-    // 다국어 사전
     const i18n = {
       ko: {
         modalTitle: "YWAM가덕 차량 사용 신청서",
@@ -439,8 +437,9 @@
       btnCarnival.addEventListener("click", () => selectVehicle("카니발 (9인승)"));
       btnTruck.addEventListener("click", () => selectVehicle("탑차 (1톤)"));
 
-      startTimeSelect.addEventListener("change", () => updateTimeSelectOptions(true));
-      endTimeSelect.addEventListener("change", () => updateTimeSelectOptions(false));
+      // 시간 변경 이벤트 연결 오류 수정
+      startTimeSelect.addEventListener("change", () => updateTimeSelectOptions());
+      endTimeSelect.addEventListener("change", () => updateTimeSelectOptions());
       document.getElementById("cancelEditBtn").addEventListener("click", () => resetEditMode());
 
       document.getElementById("tabReserve").addEventListener("click", () => switchTab('reserve'));
@@ -720,7 +719,7 @@
       }
     }
 
-    function updateTimeSelectOptions(fromStartChange = false) {
+    function updateTimeSelectOptions() {
       const currentVehicle = vehicleSelect.value;
       const curStart = startDateStr;
       const curEnd = endDateStr || startDateStr;
@@ -748,6 +747,10 @@
         bookedTimeNotice.classList.add("hidden");
       }
 
+      const prevStartVal = startTimeSelect.value;
+      const prevEndVal = endTimeSelect.value;
+
+      // 1. 출발 시각 옵션 생성
       const startOpts = timeSlots.slice(0, -1).map(t => {
         const slotStartMs = parseTimeMs(curStart, t);
         const nextIdx = timeSlots.indexOf(t) + 1;
@@ -763,16 +766,17 @@
       });
       startTimeSelect.innerHTML = startOpts.join('');
 
-      let validStartOpt = Array.from(startTimeSelect.options).find(o => o.value === startTimeSelect.value && !o.disabled);
-      if (!validStartOpt) {
+      // 유효한 출발 시각 설정
+      if (Array.from(startTimeSelect.options).some(o => o.value === prevStartVal && !o.disabled)) {
+        startTimeSelect.value = prevStartVal;
+      } else {
         const firstAvailable = Array.from(startTimeSelect.options).find(o => !o.disabled);
-        if (firstAvailable) {
-          startTimeSelect.value = firstAvailable.value;
-        }
+        if (firstAvailable) startTimeSelect.value = firstAvailable.value;
       }
 
       const selectedStartIdx = timeSlots.indexOf(startTimeSelect.value);
 
+      // 2. 반납 시각 옵션 생성
       const endOpts = timeSlots.slice(1).map(t => {
         const tIdx = timeSlots.indexOf(t);
 
@@ -796,12 +800,12 @@
       });
       endTimeSelect.innerHTML = endOpts.join('');
 
-      let validEndOpt = Array.from(endTimeSelect.options).find(o => o.value === endTimeSelect.value && !o.disabled);
-      if (!validEndOpt) {
+      // 유효한 반납 시각 설정
+      if (Array.from(endTimeSelect.options).some(o => o.value === prevEndVal && !o.disabled)) {
+        endTimeSelect.value = prevEndVal;
+      } else {
         const firstAvailableEnd = Array.from(endTimeSelect.options).find(o => !o.disabled);
-        if (firstAvailableEnd) {
-          endTimeSelect.value = firstAvailableEnd.value;
-        }
+        if (firstAvailableEnd) endTimeSelect.value = firstAvailableEnd.value;
       }
     }
 
@@ -893,12 +897,10 @@
         renderReservationList();
       }
 
-      // 1) 신규 신청일 때만 구글 챗 웹훅 알림 발송 (수정 시 알림 제외)
       if (!isEditMode) {
         sendGoogleChatWebhook(formData, "NEW");
       }
       
-      // 2) 구글 스프레드시트 기록
       sendToGoogleSheet(formData);
 
       alert(isEditMode ? (currentLang === 'ko' ? "예약이 수정되었습니다." : "Reservation updated successfully.") : (currentLang === 'ko' ? "차량 예약 신청이 완료되었습니다." : "Reservation submitted successfully."));
@@ -1056,7 +1058,6 @@
       }
     }
 
-    // 구글 스프레드시트로 전송하는 함수
     async function sendToGoogleSheet(data) {
       if (!GOOGLE_SHEET_WEB_APP_URL) return;
 

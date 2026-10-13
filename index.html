@@ -94,17 +94,15 @@
       </div>
 
       <form id="reservationForm" class="space-y-4">
-        <!-- 차량 선택 (카드 버튼 선택 방식) -->
+        <!-- 차량 선택 -->
         <div>
           <label class="block text-xs font-semibold text-gray-300 mb-2" data-i18n="labelVehicle">차량 선택</label>
           <div class="grid grid-cols-2 gap-2 text-xs">
-            <button type="button" id="btnCarnival" class="vehicle-btn p-3 rounded-xl border border-emerald-500 bg-emerald-950/40 text-emerald-300 font-bold flex flex-col items-center justify-center gap-1 transition-all shadow-md">
-              <i class="fa-solid fa-van-shuttle text-lg"></i>
-              <span>카니발 (9인승)</span>
+            <button type="button" id="btnCarnival" class="vehicle-btn py-3 px-2 rounded-xl border border-emerald-500 bg-emerald-950/40 text-emerald-300 font-bold text-center transition-all shadow-md">
+              카니발 (9인승)
             </button>
-            <button type="button" id="btnTruck" class="vehicle-btn p-3 rounded-xl border border-gray-700 bg-input/40 text-gray-400 font-semibold flex flex-col items-center justify-center gap-1 transition-all hover:bg-gray-800">
-              <i class="fa-solid fa-truck-flatbed text-lg"></i>
-              <span>탑차 (1톤)</span>
+            <button type="button" id="btnTruck" class="vehicle-btn py-3 px-2 rounded-xl border border-gray-700 bg-input/40 text-gray-400 font-semibold text-center transition-all hover:bg-gray-800">
+              탑차 (1톤)
             </button>
           </div>
           <input type="hidden" id="vehicleSelect" value="카니발 (9인승)">
@@ -120,7 +118,7 @@
           <div id="calendarWeekDays" class="grid grid-cols-7 text-center text-[11px] text-gray-400 font-semibold py-1"></div>
           <div id="calendarDays" class="grid grid-cols-7 gap-1"></div>
           <div id="rangeSelectHint" class="text-[11px] text-center text-emerald-300 pt-1 font-medium"></div>
-          <div id="bookedTimeNotice" class="text-[11px] text-center text-rose-400 font-medium hidden"></div>
+          <div id="bookedTimeNotice" class="text-[11px] text-center text-amber-300 font-medium hidden"></div>
         </div>
 
         <!-- 시간 선택 -->
@@ -142,7 +140,6 @@
             <input type="text" id="userName" required class="w-full bg-input border border-gray-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500">
           </div>
 
-          <!-- 실제 운전자 상이 체크박스 -->
           <div class="pt-1">
             <label class="flex items-center space-x-2 text-xs text-amber-300 cursor-pointer select-none">
               <input type="checkbox" id="differentDriverCheck" class="rounded border-gray-700 text-emerald-500 focus:ring-emerald-500">
@@ -230,6 +227,9 @@
   </div>
 
   <script>
+    // 구글 스프레드시트 앱스크립트 웹앱 URL
+    const GOOGLE_SHEET_WEB_APP_URL = "https://script.google.com/a/macros/ywamck.org/s/AKfycbwujyOP2cp0ucQql3Ya8fcV41-n0t1kDC7AX6xzm302D3Tc5s-mt_cTe75VwOMJZnxwnQ/exec";
+
     // 다국어 사전
     const i18n = {
       ko: {
@@ -401,7 +401,6 @@
     let editingResTarget = null;
     let isTimerFinished = false;
 
-    // Webhook URL 최신 주소 설정 및 로컬 스토리지 동기화
     let webhookUrl = DEFAULT_WEBHOOK_URL;
     localStorage.setItem("google_chat_webhook", DEFAULT_WEBHOOK_URL);
 
@@ -437,7 +436,6 @@
       document.getElementById("webhookInput").value = webhookUrl;
       document.getElementById("firebaseConfigInput").value = firebaseConfigRaw;
 
-      // 차량 선택 버튼 이벤트
       btnCarnival.addEventListener("click", () => selectVehicle("카니발 (9인승)"));
       btnTruck.addEventListener("click", () => selectVehicle("탑차 (1톤)"));
 
@@ -492,11 +490,11 @@
     function selectVehicle(vehicleName) {
       vehicleSelect.value = vehicleName;
       if (vehicleName === "카니발 (9인승)") {
-        btnCarnival.className = "vehicle-btn p-3 rounded-xl border border-emerald-500 bg-emerald-950/40 text-emerald-300 font-bold flex flex-col items-center justify-center gap-1 transition-all shadow-md";
-        btnTruck.className = "vehicle-btn p-3 rounded-xl border border-gray-700 bg-input/40 text-gray-400 font-semibold flex flex-col items-center justify-center gap-1 transition-all hover:bg-gray-800";
+        btnCarnival.className = "vehicle-btn py-3 px-2 rounded-xl border border-emerald-500 bg-emerald-950/40 text-emerald-300 font-bold text-center transition-all shadow-md";
+        btnTruck.className = "vehicle-btn py-3 px-2 rounded-xl border border-gray-700 bg-input/40 text-gray-400 font-semibold text-center transition-all hover:bg-gray-800";
       } else {
-        btnTruck.className = "vehicle-btn p-3 rounded-xl border border-emerald-500 bg-emerald-950/40 text-emerald-300 font-bold flex flex-col items-center justify-center gap-1 transition-all shadow-md";
-        btnCarnival.className = "vehicle-btn p-3 rounded-xl border border-gray-700 bg-input/40 text-gray-400 font-semibold flex flex-col items-center justify-center gap-1 transition-all hover:bg-gray-800";
+        btnTruck.className = "vehicle-btn py-3 px-2 rounded-xl border border-emerald-500 bg-emerald-950/40 text-emerald-300 font-bold text-center transition-all shadow-md";
+        btnCarnival.className = "vehicle-btn py-3 px-2 rounded-xl border border-gray-700 bg-input/40 text-gray-400 font-semibold text-center transition-all hover:bg-gray-800";
       }
       renderCalendar();
       updateTimeSelectOptions();
@@ -722,7 +720,7 @@
       }
     }
 
-    function updateTimeSelectOptions(fromStartChange = null) {
+    function updateTimeSelectOptions(fromStartChange = false) {
       const currentVehicle = vehicleSelect.value;
       const curStart = startDateStr;
       const curEnd = endDateStr || startDateStr;
@@ -744,7 +742,7 @@
 
       if (activeResList.length > 0) {
         const textNotice = activeResList.map(r => `${r.startTime}~${r.endTime}`).join(", ");
-        bookedTimeNotice.textContent = `🚫 이미 예약된 시간: ${textNotice}`;
+        bookedTimeNotice.textContent = `📌 기존 예약 시간: ${textNotice}`;
         bookedTimeNotice.classList.remove("hidden");
       } else {
         bookedTimeNotice.classList.add("hidden");
@@ -853,10 +851,11 @@
       const excludeId = editingResTarget ? (editingResTarget.fbKey || editingResTarget.id) : null;
 
       if (checkOverlap(currentVehicle, startMs, endMs, excludeId)) {
-        alert(currentLang === 'ko' ? "선택하신 시간대에 이미 예약이 존재합니다. 다른 시간을 선택해주세요." : "A reservation already exists for this timeframe.");
+        alert(currentLang === 'ko' ? "선택하신 시간대에 이미 다른 예약이 존재합니다. 빈 시간을 선택해주세요." : "A reservation already exists for this timeframe.");
         return;
       }
 
+      const isEditMode = !!editingResTarget;
       const diffDriver = document.getElementById("differentDriverCheck").checked;
       const formData = {
         id: editingResTarget ? editingResTarget.id : Date.now().toString(),
@@ -894,8 +893,15 @@
         renderReservationList();
       }
 
-      sendGoogleChatWebhook(formData, editingResTarget ? "UPDATE" : "NEW");
-      alert(editingResTarget ? (currentLang === 'ko' ? "예약이 수정되었습니다." : "Reservation updated successfully.") : (currentLang === 'ko' ? "차량 예약 신청이 완료되었습니다." : "Reservation submitted successfully."));
+      // 1) 신규 신청일 때만 구글 챗 웹훅 알림 발송 (수정 시 알림 제외)
+      if (!isEditMode) {
+        sendGoogleChatWebhook(formData, "NEW");
+      }
+      
+      // 2) 구글 스프레드시트 기록
+      sendToGoogleSheet(formData);
+
+      alert(isEditMode ? (currentLang === 'ko' ? "예약이 수정되었습니다." : "Reservation updated successfully.") : (currentLang === 'ko' ? "차량 예약 신청이 완료되었습니다." : "Reservation submitted successfully."));
       resetEditMode();
       reservationForm.reset();
       startDateStr = null;
@@ -1010,7 +1016,6 @@
         renderReservationList();
       }
 
-      sendGoogleChatWebhook(target, "DELETE");
       alert(currentLang === 'ko' ? "예약이 삭제되었습니다." : "Reservation deleted successfully.");
     };
 
@@ -1031,16 +1036,12 @@
     async function sendGoogleChatWebhook(data, type) {
       if (!webhookUrl) return;
 
-      let tag = "[예약신청]";
-      if (type === "UPDATE") tag = "[예약수정]";
-      if (type === "DELETE") tag = "[예약취소]";
-
       const fmtDate = (str) => str ? str.slice(5).replace('-', '/') : '';
       const startFmt = `${fmtDate(data.startDate)} ${data.startTime}`;
       const endFmt = `${fmtDate(data.endDate)} ${data.endTime}`;
 
       const payload = {
-        text: `${tag} ${data.userName}\n` +
+        text: `[예약신청] ${data.userName}\n` +
               `• 일정: ${startFmt} ~ ${endFmt}`
       };
 
@@ -1052,6 +1053,22 @@
         });
       } catch (err) {
         console.error("Webhook 전송 실패:", err);
+      }
+    }
+
+    // 구글 스프레드시트로 전송하는 함수
+    async function sendToGoogleSheet(data) {
+      if (!GOOGLE_SHEET_WEB_APP_URL) return;
+
+      try {
+        await fetch(GOOGLE_SHEET_WEB_APP_URL, {
+          method: "POST",
+          mode: "no-cors",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data)
+        });
+      } catch (err) {
+        console.error("구글 스프레드시트 전송 에러:", err);
       }
     }
   </script>
